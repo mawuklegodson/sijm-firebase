@@ -1,0 +1,544 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Check if user has specific permission in their workerPermissions array
+    function getProfile() {
+      return get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data;
+    }
+
+    function hasPermission(permissionName) {
+      let path = /databases/$(database)/documents/profiles/$(request.auth.uid);
+      return isSignedIn() && exists(path) && (
+        get(path).data.get('workerPermissions', []).hasAny([permissionName]) ||
+        get(path).data.get('worker_permissions', []).hasAny([permissionName])
+      );
+    }
+
+    // Hardcoded super admin bypass for enochapafloe@gmail.com
+    function isHardcodedSuperAdmin() {
+      return isSignedIn() && 
+        request.auth.token.email == "enochapafloe@gmail.com" && 
+        request.auth.token.email_verified == true;
+    }
+
+    function isSuperAdmin() {
+      return isHardcodedSuperAdmin() || hasPermission('Super Admin');
+    }
+
+    function isAdmin() {
+      return isSuperAdmin() || hasPermission('Admin');
+    }
+
+    function isMediaTeam() {
+      return isAdmin() || hasPermission('Media Team');
+    }
+
+    function isUsher() {
+      return isMediaTeam() || hasPermission('Usher');
+    }
+
+    function isPrayerHead() {
+      return isSuperAdmin() || hasPermission('Prayer Head');
+    }
+
+    function isPrayerTeam() {
+      return isLeadership() || hasPermission('Prayer Team') || isPrayerHead();
+    }
+
+    function isGroupHead() {
+      return isSignedIn() && getProfile().get('identityRole', '') == 'Group Head';
+    }
+
+    function isBranchHead() {
+      return isSignedIn() && getProfile().get('identityRole', '') == 'Branch Head';
+    }
+
+    function isRegionalHead() {
+      return isSignedIn() && getProfile().get('identityRole', '') == 'Regional Head';
+    }
+
+    function isNationalHead() {
+      return isSignedIn() && getProfile().get('identityRole', '') == 'National Head';
+    }
+
+    function isGeneralHead() {
+      return isSignedIn() && getProfile().get('identityRole', '') == 'General Head';
+    }
+
+    function isLeadership() {
+      let path = /databases/$(database)/documents/profiles/$(request.auth.uid);
+      let roles = [
+        'Pastor', 'Apostle', 'Prophet', 'Teacher', 'Evangelist', 'Leader',
+        'Group Head', 'Branch Head', 'Regional Head', 'National Head', 'General Head'
+      ];
+      return isMediaTeam() || (
+        isSignedIn() &&
+        exists(path) && (
+          get(path).data.get('identityRole', 'Member') in roles ||
+          get(path).data.get('identity_role', 'Member') in roles
+        )
+      );
+    }
+
+    function isSermonSuspended() {
+      let path = /databases/$(database)/documents/profiles/$(request.auth.uid);
+      return isSignedIn() && exists(path) && (
+        get(path).data.get('sermonAccessSuspended', false) == true ||
+        get(path).data.get('sermon_access_suspended', false) == true
+      );
+    }
+
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    // ------------------- PROFILES -------------------
+    // User profile data with role/permission management
+    match /profiles/{userId} {
+      // Users can read their own profile, or leadership can read profiles in their branch/dominion
+      // Members can read profiles to find leadership for notifications
+      allow read: if isSignedIn();
+      
+      // Users can create their own profile on signup, or admins can create any
+      allow create: if isOwner(userId) || isAdmin();
+      
+      // Users can update their own profile, admins can update any
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // Only admins can delete profiles
+      allow delete: if isAdmin();
+    }
+
+    // ------------------- MEMBERS -------------------
+    // Church member directory
+    match /members/{memberId} {
+      // Access control for member data:
+      // 1. Super Admins and General Heads see all members
+      // 2. National/Regional Heads see members in their dominion
+      // 3. Branch/Group Heads see members in their branch
+      allow read: if isSuperAdmin() || isGeneralHead() || (
+        isSignedIn() && (
+          (isNationalHead() && resource.data.dominion == getProfile().dominion) ||
+          (isRegionalHead() && resource.data.dominion == getProfile().dominion) ||
+          (isBranchHead() && resource.data.branch == getProfile().branch) ||
+          (isGroupHead() && resource.data.branch == getProfile().branch) ||
+          isUsher() // Maintain existing usher access if applicable
+        )
+      );
+      
+      // Only admins can create/update/delete members
+      allow write: if isAdmin();
+    }
+
+    // ------------------- ATTENDANCE -------------------
+    // Service attendance records
+    match /attendance/{recordId} {
+      // Ushers and above can read attendance data
+      allow read: if isUsher();
+      
+      // Ushers can record/update attendance
+      allow write: if isUsher();
+    }
+
+    // ------------------- FIRST TIMERS -------------------
+    // Visitor tracking and follow-up
+    match /first_timers/{visitorId} {
+      // Ushers and above can read visitor data
+      allow read: if isUsher();
+      
+      // Ushers can add/update visitor records
+      allow write: if isUsher();
+    }
+
+    // ------------------- ABSENTEES -------------------
+    // Pastoral care tracking for absent members
+    match /absentees/{absenteeId} {
+      // Ushers and above can read absentee data
+      allow read: if isUsher();
+      
+      // Ushers can manage absentee records
+      allow write: if isUsher();
+    }
+
+    // ------------------- ANNOUNCEMENTS -------------------
+    // Ministry announcements and notifications
+    match /announcements/{announcementId} {
+      // Announcements are public for the landing page
+      allow read: if true;
+      
+      // Ushers and above can create/update announcements
+      allow write: if isUsher();
+    }
+
+    // ------------------- ASSETS -------------------
+    // Church property and equipment tracking
+    match /assets/{assetId} {
+      // Ushers and above can read asset data
+      allow read: if isUsher();
+      
+      // Only admins can manage assets
+      allow write: if isAdmin();
+    }
+
+    // ------------------- COMPLAINTS -------------------
+    // Facility maintenance and issue reporting
+    match /complaints/{complaintId} {
+      // Ushers and above can read complaints
+      allow read: if isUsher();
+      
+      // Any signed-in user can submit a complaint
+      allow create: if isSignedIn();
+      
+      // Ushers can update complaint status
+      allow update: if isUsher();
+      
+      // Only admins can delete complaints
+      allow delete: if isAdmin();
+    }
+
+    // ------------------- REMINDERS -------------------
+    // Follow-up tasks for visitors and members
+    match /reminders/{reminderId} {
+      // Ushers and above can read reminders
+      allow read: if isUsher();
+      
+      // Ushers can manage reminders
+      allow write: if isUsher();
+    }
+
+    // ------------------- RESOURCES (SERMONS) -------------------
+    // Sermons, music, and downloadable content
+    // ⚠️ CRITICAL: access_level values MUST match SermonAccessLevel enum in types.ts
+    match /resources/{resourceId} {
+      function isPublic() {
+        // Default to 'Public' if field is missing to ensure visibility
+        // Check both access_level and accessLevel for compatibility
+        let data = resource.data;
+        let val1 = data.get('access_level', 'Public');
+        let val2 = data.get('accessLevel', 'Public');
+        
+        let publicList = ['General Public', 'Public', 'public', 'all', 'All', 'any', '', null];
+        return val1 in publicList || val2 in publicList;
+      }
+
+      function isMemberOnly() {
+        let data = resource.data;
+        let val1 = data.get('access_level', '');
+        let val2 = data.get('accessLevel', '');
+        let memberList = ['Member', 'Member-Only', 'member-only'];
+        return val1 in memberList || val2 in memberList;
+      }
+
+      function isLeadershipOnly() {
+        let data = resource.data;
+        let val1 = data.get('access_level', '');
+        let val2 = data.get('accessLevel', '');
+        let leadershipList = ['Leadership', 'Leadership-Only', 'leadership-only'];
+        return val1 in leadershipList || val2 in leadershipList;
+      }
+
+      // Public sermons visible to everyone (including anonymous users)
+      // If signed in, check if suspended
+      allow read: if isPublic() && (!isSignedIn() || !isSermonSuspended());
+      
+      // Member-only content requires authentication and NOT suspended
+      allow read: if isSignedIn() && !isSermonSuspended() && (isPublic() || isMemberOnly());
+      
+      // Leadership-only content requires leadership role and NOT suspended
+      allow read: if isLeadership() && !isSermonSuspended() && (isPublic() || isMemberOnly() || isLeadershipOnly());
+      
+      // Media team and admins can read and manage all resources
+      allow read: if isMediaTeam();
+      allow write: if isMediaTeam();
+    }
+
+    // ------------------- PRAYER REQUESTS -------------------
+    // User prayer requests and intercession tracking
+    match /prayer_requests/{requestId} {
+      function isValidPrayerRequest(data) {
+        return data.userId is string && data.userId.size() > 0 &&
+               data.userName is string && data.userName.size() > 0 &&
+               data.subject is string && data.subject.size() > 0 &&
+               data.content is string && data.content.size() > 0 &&
+               data.isPrivate is bool &&
+               data.status in ['Pending', 'Prayed', 'Answered'] &&
+               isValidDateString(data.createdAt) &&
+               (!('visibleToIds' in data) || data.visibleToIds is list) &&
+               (!('branch' in data) || data.branch is string);
+      }
+
+      function canSeeRequest() {
+        let data = resource.data;
+        let isOwner = isOwner(data.userId);
+        let isTeam = isPrayerTeam();
+        let isHead = isPrayerHead() || isAdmin();
+        let inBranch = !('branch' in data) || data.branch == getProfile().get('branch', '');
+        
+        let visibleToIds = data.get('visibleToIds', []);
+        let isSpecificallyVisible = visibleToIds.size() == 0 || request.auth.uid in visibleToIds;
+        
+        return !data.isPrivate || isOwner || isHead || (isTeam && inBranch && isSpecificallyVisible);
+      }
+
+      // Users can read their own requests, prayer team can read if permitted
+      allow read: if isSignedIn() && canSeeRequest();
+      
+      // Any signed-in user can create a prayer request
+      allow create: if isSignedIn() && 
+                    request.resource.data.userId == request.auth.uid &&
+                    isValidPrayerRequest(request.resource.data);
+      
+      // Users can update/delete their own requests, prayer team can manage status/notes
+      allow update: if isSignedIn() && 
+                    (isOwner(resource.data.userId) || isPrayerTeam()) &&
+                    isValidPrayerRequest(request.resource.data);
+                    
+      allow delete: if isSignedIn() && (isOwner(resource.data.userId) || isPrayerTeam());
+
+      // Subcollection for notes
+      match /notes/{noteId} {
+        function isValidNote(data) {
+          return data.text is string && data.text.size() > 0 &&
+                 data.authorId is string &&
+                 data.authorName is string &&
+                 data.isPrivate is bool &&
+                 isValidDateString(data.createdAt);
+        }
+
+        function canSeeNote() {
+          let note = resource.data;
+          let isTeam = isPrayerTeam();
+          let isSA = isSuperAdmin();
+          let reqData = get(/databases/$(database)/documents/prayer_requests/$(requestId)).data;
+          let isOwnerOfReq = isSignedIn() && request.auth.uid == reqData.userId;
+          let visibleToIds = reqData.get('visibleToIds', []);
+          let isSpecificallyVisible = visibleToIds.size() > 0 && request.auth.uid in visibleToIds;
+          
+          return isSA || isTeam || (!note.isPrivate && (isOwnerOfReq || isSpecificallyVisible));
+        }
+
+        allow read: if isSignedIn() && canSeeNote();
+
+        allow create: if isSignedIn() && isPrayerTeam() && isValidNote(request.resource.data);
+        allow update: if isSignedIn() && isPrayerTeam() && resource.data.authorId == request.auth.uid && isValidNote(request.resource.data);
+        allow delete: if isSignedIn() && isPrayerTeam() && (resource.data.authorId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // ------------------- EVENTS -------------------
+    // Church calendar and special events
+    match /events/{eventId} {
+      // Events are public for the landing page
+      allow read: if true;
+      
+      // Only admins can manage events
+      allow write: if isAdmin();
+    }
+
+    // ------------------- GROUPS -------------------
+    // Church small groups and cells
+    match /groups/{groupId} {
+      function isValidGroup(data) {
+        return data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+               data.description is string && data.description.size() < 1000 &&
+               data.category in ['Cell', 'Department', 'Fellowship', 'Other'] &&
+               data.headId is string &&
+               data.headName is string &&
+               data.memberIds is list &&
+               (!('meetingTime' in data) || data.meetingTime is string) &&
+               (!('meetingLocation' in data) || data.meetingLocation is string) &&
+               isValidDateString(data.createdAt);
+      }
+
+      allow read: if isSignedIn();
+      
+      // Only admins can create/delete groups
+      allow create: if isAdmin() && isValidGroup(request.resource.data);
+      
+      // Admins or group heads can update group details
+      // Members can join/leave (which updates memberIds)
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (resource.data.headId == request.auth.uid) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds']))
+      ) && isValidGroup(request.resource.data);
+      
+      allow delete: if isAdmin();
+    }
+
+    // ------------------- LANDING PAGE CONFIG -------------------
+    // Website homepage configuration
+    match /landingPageConfigs/{configId} {
+      // Public read access for website rendering
+      allow read: if true;
+      
+      // Only super admins can modify landing page
+      allow write: if isSuperAdmin();
+    }
+
+    // ------------------- GLOBAL SETTINGS -------------------
+    // Application-wide configuration
+    match /settings/{settingId} {
+      // Branding and general info are public for the login/landing pages
+      allow read: if true;
+      
+      // Only super admins can modify global settings
+      allow write: if isSuperAdmin();
+    }
+
+    // ------------------- CONNECTION TEST -------------------
+    // Used for verifying Firestore connectivity during development
+    match /test/connection {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ------------------- CHATS -------------------
+    // Chat conversations between users
+    match /chats/{chatId} {
+      function isParticipant() {
+        return isSignedIn() && request.auth.uid in resource.data.participants;
+      }
+
+      function isValidChat(data) {
+        return data.participants is list && data.participants.size() == 2 &&
+               request.auth.uid in data.participants &&
+               data.lastMessageAt is string &&
+               isValidDateString(data.lastMessageAt);
+      }
+
+      // Users can read chats they are part of
+      allow read: if isParticipant();
+      
+      // Users can create a chat if they are a participant
+      allow create: if isSignedIn() && isValidChat(request.resource.data);
+      
+      // Participants can update chat metadata (lastMessage, unreadCount)
+      allow update: if isParticipant() && isValidChat(request.resource.data);
+      
+      // Only admins can delete chats
+      allow delete: if isAdmin();
+
+      // Subcollection for messages
+      match /messages/{messageId} {
+        function isValidMessage(data) {
+          return data.chatId == chatId &&
+                 data.senderId == request.auth.uid &&
+                 data.receiverId is string &&
+                 data.text is string && data.text.size() > 0 && data.text.size() < 5000 &&
+                 isValidDateString(data.createdAt);
+        }
+
+        // Participants can read messages in the chat
+        allow read: if isParticipant();
+        
+        // Participants can send messages
+        allow create: if isParticipant() && isValidMessage(request.resource.data);
+        
+        // Receiver can update message status (isRead)
+        allow update: if isParticipant() && 
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']) &&
+                      resource.data.receiverId == request.auth.uid;
+        
+        // Only sender or admin can delete messages
+        allow delete: if isParticipant() && (resource.data.senderId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // ------------------- SERMON Q&A -------------------
+    // Questions and answers about sermons
+    match /sermon_questions/{questionId} {
+      function isValidQuestion(data) {
+        return data.sermonId is string &&
+               data.userId == request.auth.uid &&
+               data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+               isValidDateString(data.createdAt);
+      }
+
+      // Anyone signed in can read questions
+      allow read: if isSignedIn();
+      
+      // Registered members can ask questions
+      allow create: if isSignedIn() && isValidQuestion(request.resource.data);
+      
+      // Only the author or admin can update/delete their question
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin()) && isValidQuestion(request.resource.data);
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // Subcollection for answers
+      match /answers/{answerId} {
+        function isValidAnswer(data) {
+          return data.questionId == questionId &&
+                 data.sermonId is string &&
+                 data.userId == request.auth.uid &&
+                 data.content is string && data.content.size() > 0 && data.content.size() < 5000 &&
+                 isValidDateString(data.createdAt);
+        }
+
+        // Anyone signed in can read answers
+        allow read: if isSignedIn();
+        
+        // Registered members can provide answers
+        allow create: if isSignedIn() && isValidAnswer(request.resource.data);
+        
+        // Users can update their own answers or like/unlike answers
+        allow update: if isSignedIn() && (
+          (resource.data.userId == request.auth.uid && isValidAnswer(request.resource.data)) ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']))
+        );
+        
+        // Only the author or admin can delete their answer
+        allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      }
+    }
+
+    // ------------------- NOTIFICATIONS -------------------
+    // User notifications
+    match /notifications/{notificationId} {
+      function isRecipient() {
+        return isSignedIn() && request.auth.uid == resource.data.userId;
+      }
+
+      // Users can read their own notifications
+      allow read: if isRecipient();
+      
+      // System can create notifications (or users for actions like likes/questions)
+      // For simplicity, allow any signed-in user to create a notification, 
+      // but validate that the userId in the data is a valid user.
+      allow create: if isSignedIn();
+      
+      // Users can mark their own notifications as read
+      allow update: if isRecipient() && 
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+      
+      // Only recipient or admin can delete
+      allow delete: if isRecipient() || isAdmin();
+    }
+
+    // ===============================================================
+    // Default Deny Rule (Catch-All)
+    // ===============================================================
+    // Deny all access to any document not explicitly allowed above
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

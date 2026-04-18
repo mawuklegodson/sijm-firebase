@@ -1,0 +1,7 @@
+{
+  "name": "Firebase: SIJM",
+  "description": "A comprehensive administration and analytics platform for modern churches, featuring attendance tracking, first-timer follow-ups, asset management, and deep growth analytics for administrators and ushers.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

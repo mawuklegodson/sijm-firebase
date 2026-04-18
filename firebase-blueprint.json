@@ -1,0 +1,268 @@
+{
+  "entities": {
+    "Profile": {
+      "title": "Profile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "full_name": { "type": "string" },
+        "identityRole": { "type": "string" },
+        "workerPermissions": { "type": "array", "items": { "type": "string" } },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "branch": { "type": "string" },
+        "location": { "type": "string" },
+        "birthday": { "type": "string" },
+        "gender": { "type": "string" },
+        "status": { "type": "string" },
+        "sermonAccessSuspended": { "type": "boolean" },
+        "profileUpdateRequested": { "type": "boolean" },
+        "isOnline": { "type": "boolean" },
+        "lastSeen": { "type": "string" }
+      },
+      "required": ["username", "full_name", "identityRole", "email"]
+    },
+    "Member": {
+      "title": "Member",
+      "description": "Church member information",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "gender": { "type": "string" },
+        "birthday": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "location": { "type": "string" },
+        "branch": { "type": "string" },
+        "category": { "type": "string" },
+        "membershipDate": { "type": "string" },
+        "followUpNeeded": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["fullName", "gender", "location", "category", "membershipDate"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Service attendance record",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "serviceType": { "type": "string" },
+        "branch": { "type": "string" },
+        "segmentName": { "type": "string" },
+        "maleCount": { "type": "integer" },
+        "femaleCount": { "type": "integer" },
+        "childrenCount": { "type": "integer" },
+        "totalCount": { "type": "integer" },
+        "recordedBy": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["date", "serviceType", "branch", "totalCount"]
+    },
+    "FirstTimer": {
+      "title": "FirstTimer",
+      "description": "First time visitor information",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "gender": { "type": "string" },
+        "visitDate": { "type": "string" },
+        "followUpStatus": { "type": "string" }
+      },
+      "required": ["fullName", "phone", "gender", "visitDate", "followUpStatus"]
+    },
+    "Resource": {
+      "title": "Resource",
+      "description": "Sermons and other church resources",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "file_url": { "type": "string" },
+        "access_level": { "type": "string" },
+        "created_at": { "type": "string" }
+      },
+      "required": ["title", "category", "file_url", "access_level"]
+    },
+    "PrayerRequest": {
+      "title": "PrayerRequest",
+      "description": "User prayer requests",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userPhone": { "type": "string" },
+        "request": { "type": "string" },
+        "isPrivate": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["Pending", "Prayed", "Answered"] },
+        "createdAt": { "type": "string" },
+        "category": { "type": "string" },
+        "anonymous": { "type": "boolean" },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "text": { "type": "string" },
+              "authorId": { "type": "string" },
+              "authorName": { "type": "string" },
+              "isPrivate": { "type": "boolean" },
+              "createdAt": { "type": "string" }
+            }
+          }
+        },
+        "visibleToIds": { "type": "array", "items": { "type": "string" } },
+        "branch": { "type": "string" }
+      },
+      "required": ["userId", "userName", "request", "isPrivate", "status", "createdAt"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Church events",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "location": { "type": "string" },
+        "category": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "isRecurring": { "type": "boolean" },
+        "recurringDay": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "date", "time", "location", "category", "createdAt"]
+    },
+    "Chat": {
+      "title": "Chat",
+      "description": "Chat conversation between users",
+      "type": "object",
+      "properties": {
+        "participants": { "type": "array", "items": { "type": "string" } },
+        "lastMessage": { "type": "string" },
+        "lastMessageAt": { "type": "string" },
+        "lastSenderId": { "type": "string" },
+        "unreadCount": { "type": "object" }
+      },
+      "required": ["participants", "lastMessageAt"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Single chat message",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "encrypted": { "type": "boolean" }
+      },
+      "required": ["chatId", "senderId", "receiverId", "text", "createdAt"]
+    },
+    "SermonQuestion": {
+      "title": "Sermon Question",
+      "description": "A question asked by a user about a specific sermon.",
+      "type": "object",
+      "properties": {
+        "sermonId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "answerCount": { "type": "number" }
+      },
+      "required": ["sermonId", "userId", "content", "createdAt"]
+    },
+    "SermonAnswer": {
+      "title": "Sermon Answer",
+      "description": "An answer or comment provided for a sermon question.",
+      "type": "object",
+      "properties": {
+        "questionId": { "type": "string" },
+        "sermonId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userPhoto": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "likes": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["questionId", "sermonId", "userId", "content", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notifications",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string", "enum": ["question", "answer", "like", "system"] },
+        "link": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "metadata": { "type": "object" }
+      },
+      "required": ["userId", "title", "message", "type", "isRead", "createdAt"]
+    }
+  },
+  "firestore": {
+    "profiles/{userId}": {
+      "schema": "Profile",
+      "description": "User profiles"
+    },
+    "members/{memberId}": {
+      "schema": "Member",
+      "description": "Church members"
+    },
+    "attendance/{recordId}": {
+      "schema": "Attendance",
+      "description": "Attendance records"
+    },
+    "first_timers/{visitorId}": {
+      "schema": "FirstTimer",
+      "description": "First time visitors"
+    },
+    "resources/{resourceId}": {
+      "schema": "Resource",
+      "description": "Church resources"
+    },
+    "prayer_requests/{requestId}": {
+      "schema": "PrayerRequest",
+      "description": "User prayer requests"
+    },
+    "events/{eventId}": {
+      "schema": "Event",
+      "description": "Church events"
+    },
+    "chats/{chatId}": {
+      "schema": "Chat",
+      "description": "Chat conversations"
+    },
+    "chats/{chatId}/messages/{messageId}": {
+      "schema": "Message",
+      "description": "Messages within a chat"
+    },
+    "sermon_questions/{questionId}": {
+      "schema": "SermonQuestion",
+      "description": "Questions asked about sermons"
+    },
+    "sermon_questions/{questionId}/answers/{answerId}": {
+      "schema": "SermonAnswer",
+      "description": "Answers to sermon questions"
+    },
+    "notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    }
+  }
+}
