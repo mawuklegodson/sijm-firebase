@@ -654,8 +654,9 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
               ))}
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
+    )}
 
       {/* Featured */}
       <section className="bg-slate-50 py-16 px-6 border-b border-slate-100">
