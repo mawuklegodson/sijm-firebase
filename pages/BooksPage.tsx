@@ -377,8 +377,9 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
 };
 
 /* ──────────── book detail modal ──────────── */
-const BookDetail = ({ book, onClose, onRead, onPurchase, reviews = [] }: { 
+const BookDetail = ({ book, store, onClose, onRead, onPurchase, reviews = [] }: { 
   book: Book; 
+  store: any;
   onClose: () => void; 
   onRead: () => void; 
   onPurchase: () => void;
@@ -785,6 +786,7 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
           <BookDetail 
             key="detail" 
             book={selectedBook} 
+            store={store}
             reviews={store.reviews?.filter((r: Review) => r.bookId === selectedBook.id)}
             onClose={() => setSelectedBook(null)}
             onRead={() => { setReadingBook(selectedBook); setSelectedBook(null); }}

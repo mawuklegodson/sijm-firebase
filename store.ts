@@ -103,11 +103,14 @@ import {
   LandingPageConfig,
   SermonAccessLevel,
   PrayerNote,
+  PrayerRequest,
+  ChurchEvent,
   Group,
   Broadcast,
   Order,
   Donation,
   Review,
+  Book,
   BookstoreConfig,
   PaymentConfig
 } from './types.ts';
