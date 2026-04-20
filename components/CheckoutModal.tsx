@@ -16,7 +16,8 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ book, userEmail, onClose,
   const [method, setMethod] = useState<'stripe' | 'paystack'>('paystack');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const PAYSTACK_PUBLIC_KEY = 'pk_test_06876a2cd7004fc4caa34867fb904ffd87cbcc13';
+  const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_06876a2cd7004fc4caa34867fb904ffd87cbcc13';
+  const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY || 'pk_test_51RrpSVKs46DvZjOHUQvgJl9zGzyrMyjDz9k2xucOyk1eE9KmK50wPp33MmriVcDBgjz6VPbmhQAzsMirZfz2X9ss00lBm3p6DJ';
 
   const handlePaystack = () => {
     setIsProcessing(true);

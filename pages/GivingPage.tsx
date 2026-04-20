@@ -3,6 +3,8 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Heart, Globe, Shield, ArrowRight, Zap, Star } from 'lucide-react';
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
+import GiveModal from '../components/GiveModal.tsx';
+import { AnimatePresence } from 'motion/react';
 
 const Noise = () => (
   <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] mix-blend-overlay">
@@ -16,6 +18,9 @@ const Noise = () => (
 );
 
 const GivingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> = ({ onNavigate, store }) => {
+  const [isGiveModalOpen, setIsGiveModalOpen] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState<string | undefined>(undefined);
+
   const givingOptions = [
     {
       title: "Tithes & Offerings",
@@ -36,6 +41,11 @@ const GivingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> =
       color: "emerald"
     }
   ];
+
+  const handleGiveNow = (category?: string) => {
+    setSelectedCategory(category);
+    setIsGiveModalOpen(true);
+  };
 
   return (
     <WebsiteLayout onNavigate={onNavigate} store={store} currentPage="giving">
@@ -78,7 +88,10 @@ const GivingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> =
                   <h3 className="text-3xl font-black text-indigo-900 uppercase tracking-tighter group-hover:text-white transition-colors">{option.title}</h3>
                   <p className="text-slate-500 font-medium text-lg leading-relaxed group-hover:text-white/60 transition-colors">{option.desc}</p>
                 </div>
-                <button className="flex items-center gap-4 text-indigo-600 font-black uppercase tracking-widest text-[10px] group-hover:text-amber-400 transition-colors">
+                <button 
+                  onClick={() => handleGiveNow(option.title)}
+                  className="flex items-center gap-4 text-indigo-600 font-black uppercase tracking-widest text-[10px] group-hover:text-amber-400 transition-colors"
+                >
                   Give Now <ArrowRight size={16} />
                 </button>
               </motion.div>
@@ -115,7 +128,10 @@ const GivingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> =
                     </div>
                   ))}
                 </div>
-                <button className="w-full py-6 bg-amber-400 text-indigo-950 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-amber-400/20">
+                <button 
+                  onClick={() => handleGiveNow()}
+                  className="w-full py-6 bg-amber-400 text-indigo-950 rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-amber-400/20"
+                >
                   Proceed to Payment
                 </button>
               </div>
@@ -123,6 +139,20 @@ const GivingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> =
           </div>
         </div>
       </section>
+
+      <AnimatePresence>
+        {isGiveModalOpen && (
+          <GiveModal 
+            initialCategory={selectedCategory}
+            userEmail={store.currentUser?.email}
+            onClose={() => setIsGiveModalOpen(false)}
+            onSuccess={() => {
+              setIsGiveModalOpen(false);
+              alert('Thank you for your generous partnership! Your contribution will make a significant impact.');
+            }}
+          />
+        )}
+      </AnimatePresence>
     </WebsiteLayout>
   );
 };
