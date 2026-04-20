@@ -20,7 +20,7 @@ Copy your Firebase configuration values to your hosting provider:
 - `VITE_FIREBASE_STORAGE_BUCKET`: Your Storage Bucket.
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`: Your Messaging Sender ID.
 - `VITE_FIREBASE_APP_ID`: Your App ID.
-- `API_KEY`: Your Google Gemini API Key.
+- `API_KEY`: Your Google Gemini API Key....
 
 ## 4. Why data might not show up
 If your system is in "Ministry Cloud" mode but shows no members:
