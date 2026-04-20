@@ -40,7 +40,7 @@ Add the following variables to your `.env` file or hosting provider settings:
 - `VITE_FIREBASE_STORAGE_BUCKET`: Your Storage Bucket.
 - `VITE_FIREBASE_MESSAGING_SENDER_ID`: Your Messaging Sender ID.
 - `VITE_FIREBASE_APP_ID`: Your App ID.
-- `API_KEY`: Your Google Gemini API Key./
+- `API_KEY`: Your Google Gemini API Key.
 
 ## 6. Initial Data
 The application will automatically initialize the `settings` document in the `settings` collection if it doesn't exist. Other collections will be created as you add data through the application.
