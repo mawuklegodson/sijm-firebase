@@ -420,13 +420,13 @@ const LandingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> 
               className="mt-24 flex flex-wrap items-center justify-center gap-8 md:gap-16"
             >
               {[
-                { value: '10K+', label: 'Members Worldwide', delay: 2.1 },
-                { value: '500+', label: 'Sermons & Messages', delay: 2.2 },
-                { value: '15+', label: 'Years of Ministry', delay: 2.3 },
-                { value: '12', label: 'Nations Reached', delay: 2.4 },
+                { value: config.statsCounter?.stat1Value || '10K+', label: config.statsCounter?.stat1Label || 'Members Worldwide', delay: 2.1 },
+                { value: config.statsCounter?.stat2Value || '500+', label: config.statsCounter?.stat2Label || 'Sermons & Messages', delay: 2.2 },
+                { value: config.statsCounter?.stat3Value || '15+', label: config.statsCounter?.stat3Label || 'Years of Ministry', delay: 2.3 },
+                { value: config.statsCounter?.stat4Value || '12', label: config.statsCounter?.stat4Label || 'Nations Reached', delay: 2.4 },
               ].map((stat, i) => (
                 <motion.div
-                  key={stat.label}
+                  key={stat.label + i}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: stat.delay, duration: 0.6 }}
@@ -495,17 +495,17 @@ const LandingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> 
                   className="inline-flex items-center gap-4 px-6 py-2.5 bg-indigo-50 rounded-full border border-indigo-100 shadow-sm"
                 >
                   <div className="w-2 h-2 bg-indigo-600 rounded-full" />
-                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.4em]">The SIJM Mandate</span>
+                  <span className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.4em]">{config.aboutSection?.heading || 'The SIJM Mandate'}</span>
                 </motion.div>
                 <h2 className="text-3xl md:text-6xl lg:text-8xl font-black text-indigo-950 uppercase tracking-tighter leading-tight md:leading-[0.8] font-serif italic" style={{ fontFamily: "'Playfair Display', serif" }}>
-                  Divine <br />
-                  <span className="text-indigo-600 not-italic font-sans tracking-[-0.06em] block mt-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-900">Restoration.</span>
+                  {config.aboutSection?.subheading ? config.aboutSection.subheading.split(' ')[0] : 'Divine'} <br />
+                  <span className="text-indigo-600 not-italic font-sans tracking-[-0.06em] block mt-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-indigo-900">{config.aboutSection?.subheading ? config.aboutSection.subheading.split(' ').slice(1).join(' ') : 'Restoration.'}</span>
                 </h2>
               </div>
               
               <div className="space-y-12">
-                <p className="text-lg md:text-2xl text-slate-600 font-medium leading-tight tracking-tight max-w-2xl">
-                  We are a global prophetic movement commissioned to restore the dignity of humanity through the <span className="text-indigo-950 font-black italic">power of the Holy Spirit.</span>
+                <p className="text-lg md:text-2xl text-slate-600 font-medium leading-tight tracking-tight max-w-2xl whitespace-pre-wrap">
+                  {config.aboutSection?.paragraph1 || 'We are a global prophetic movement commissioned to restore the dignity of humanity through the power of the Holy Spirit.'}
                 </p>
                 
                 <div className="flex flex-wrap gap-12">
@@ -561,7 +561,7 @@ const LandingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> 
                 <div className="absolute bottom-12 left-12 right-12 space-y-8">
                   <div className="p-8 md:p-10 bg-white/10 backdrop-blur-2xl rounded-[3rem] border border-white/20 text-white shadow-2xl">
                     <p className="text-xl md:text-2xl font-serif italic leading-tight mb-8" style={{ fontFamily: "'Playfair Display', serif" }}>
-                      "Restoration is not a process, it's an encounter with the Divine."
+                      "{config.aboutSection?.paragraph2 || "Restoration is not a process, it's an encounter with the Divine."}"
                     </p>
                     <div className="flex items-center gap-6">
                       <div className="w-12 h-px bg-amber-400" />

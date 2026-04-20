@@ -7,6 +7,7 @@ import {
   Plus, Save, Trash2, Edit3, Settings, CheckCircle2, ImageIcon
 } from 'lucide-react';
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
+import CheckoutModal from '../components/CheckoutModal.tsx';
 import { WorkerPermission } from '../types.ts';
 
 /* ──────────── types ──────────── */
@@ -28,6 +29,8 @@ interface Book {
   featured?: boolean;
   new?: boolean;
   soldOut?: boolean;
+  isComingSoon?: boolean;
+  comingSoonDate?: string;
 }
 
 /* ──────────── default books ──────────── */
@@ -107,7 +110,8 @@ const BookEditorModal: React.FC<{
   book: Book | null;
   onSave: (book: Book) => void;
   onClose: () => void;
-}> = ({ book, onSave, onClose }) => {
+  categoriesList: string[];
+}> = ({ book, onSave, onClose, categoriesList }) => {
   const isNew = !book;
   const [form, setForm] = useState<Book>(book || {
     id: Date.now().toString(),
@@ -177,7 +181,7 @@ const BookEditorModal: React.FC<{
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
                 <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}
                   className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl text-sm font-bold outline-none">
-                  {CATEGORIES.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
+                  {categoriesList.filter(c => c !== 'All').map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
@@ -244,20 +248,36 @@ const BookEditorModal: React.FC<{
           </div>
 
           {/* Flags */}
-          <div className="flex flex-wrap gap-4">
-            {[
-              { key: 'featured' as const, label: 'Featured' },
-              { key: 'new' as const, label: 'New Badge' },
-              { key: 'soldOut' as const, label: 'Sold Out' },
-            ].map(flag => (
-              <button key={flag.key}
-                onClick={() => setForm({ ...form, [flag.key]: !form[flag.key] })}
-                className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
-                  form[flag.key] ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-400 border-slate-100'
-                }`}>
-                {flag.label}: {form[flag.key] ? 'ON' : 'OFF'}
-              </button>
-            ))}
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-4">
+              {[
+                { key: 'featured' as const, label: 'Featured' },
+                { key: 'new' as const, label: 'New Badge' },
+                { key: 'soldOut' as const, label: 'Sold Out' },
+                { key: 'isComingSoon' as const, label: 'Coming Soon' },
+              ].map(flag => (
+                <button key={flag.key}
+                  onClick={() => setForm({ ...form, [flag.key]: !form[flag.key as keyof Book] })}
+                  className={`px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${
+                    form[flag.key as keyof Book] ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-slate-50 text-slate-400 border-slate-100'
+                  }`}>
+                  {flag.label}: {form[flag.key as keyof Book] ? 'ON' : 'OFF'}
+                </button>
+              ))}
+            </div>
+            
+            {form.isComingSoon && (
+              <div className="space-y-1 p-5 rounded-2xl border border-rose-100 bg-rose-50">
+                <label className="text-[9px] font-black text-rose-500 uppercase tracking-widest ml-1">Launch Date & Time (Countdown)</label>
+                <input 
+                  type="datetime-local" 
+                  value={form.comingSoonDate || ''} 
+                  onChange={e => setForm({ ...form, comingSoonDate: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-rose-100 rounded-xl text-sm font-bold outline-none text-rose-900" 
+                />
+                <p className="text-[10px] text-rose-400 font-medium px-1 mt-2">Setting a date will activate the cinematic countdown timer for this book.</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -327,11 +347,49 @@ const ReaderModal = ({ book, onClose }: { book: Book; onClose: () => void }) => 
   );
 };
 
-/* ──────────── book detail modal ──────────── */
-const BookDetail = ({ book, onClose, onRead }: { book: Book; onClose: () => void; onRead: () => void }) => {
-  const [added, setAdded] = useState(false);
-  const handleCart = () => { setAdded(true); setTimeout(() => setAdded(false), 2000); };
+/* ──────────── countdown timer ──────────── */
+const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+  const calculateTimeLeft = () => {
+    const difference = +new Date(targetDate) - +new Date();
+    let timeLeft: any = {};
+    if (difference > 0) {
+      timeLeft = {
+        d: Math.floor(difference / (1000 * 60 * 60 * 24)),
+        h: Math.floor((difference / (1000 * 60 * 60)) % 24),
+        m: Math.floor((difference / 1000 / 60) % 60),
+        s: Math.floor((difference / 1000) % 60)
+      };
+    }
+    return timeLeft;
+  };
+  const [timeLeft, setTimeLeft] = useState<any>(calculateTimeLeft());
+  useEffect(() => {
+    const timer = setTimeout(() => setTimeLeft(calculateTimeLeft()), 1000);
+    return () => clearTimeout(timer);
+  });
 
+  if (Object.keys(timeLeft).length === 0) return <span className="font-bold text-amber-500 uppercase tracking-widest text-xs">Available Now!</span>;
+
+  return (
+    <div className="flex items-center gap-3">
+      {['d', 'h', 'm', 's'].map((key, idx) => {
+        const labels = ['Days', 'Hrs', 'Mins', 'Secs'];
+        return (
+          <div key={key} className="flex flex-col items-center group">
+            <div className="w-12 h-14 bg-indigo-950 text-white rounded-xl flex items-center justify-center text-xl font-black shadow-lg shadow-indigo-950/20 border border-indigo-900 group-hover:-translate-y-1 transition-transform relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent opacity-50" />
+              {String(timeLeft[key] || 0).padStart(2, '0')}
+            </div>
+            <span className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-2">{labels[idx]}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ──────────── book detail modal ──────────── */
+const BookDetail = ({ book, onClose, onRead, onPurchase }: { book: Book; onClose: () => void; onRead: () => void; onPurchase: () => void }) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-indigo-950/60 backdrop-blur-sm">
@@ -377,22 +435,31 @@ const BookDetail = ({ book, onClose, onRead }: { book: Book; onClose: () => void
             ))}
           </div>
           <div className="flex flex-col gap-3 pt-2">
-            {(book.type === 'ebook-free' || book.type === 'both') && (
-              <button onClick={onRead}
-                className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-100">
-                <BookOpen size={18} /> Read Now (Free Preview)
-              </button>
-            )}
-            {(book.type === 'ebook-free' || book.type === 'both') && (
-              <button className="w-full py-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center justify-center gap-2">
-                <Download size={18} /> Download PDF (Free)
-              </button>
-            )}
-            {(book.type === 'physical' || book.type === 'both' || book.type === 'ebook-paid') && book.price && (
-              <button onClick={handleCart}
-                className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-xl ${added ? 'bg-emerald-600 text-white shadow-emerald-100' : 'bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-100'}`}>
-                {added ? <><Check size={18} /> Added to Cart!</> : <><ShoppingCart size={18} /> Add to Cart — ₵{book.price}</>}
-              </button>
+            {book.isComingSoon ? (
+              <div className="bg-slate-50 border border-slate-100 p-6 rounded-2xl flex flex-col items-center">
+                <p className="text-xs font-black uppercase tracking-[0.3em] text-indigo-400 mb-4 flex items-center gap-2"><Star size={14} /> Releasing Soon</p>
+                {book.comingSoonDate ? <CountdownTimer targetDate={book.comingSoonDate} /> : <p className="text-xl font-black text-indigo-900 italic font-serif">Stay Tuned!</p>}
+              </div>
+            ) : (
+              <>
+                {(book.type === 'ebook-free' || book.type === 'both') && (
+                  <button onClick={onRead}
+                    className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 shadow-xl shadow-indigo-100">
+                    <BookOpen size={18} /> Read Now (Free Preview)
+                  </button>
+                )}
+                {(book.type === 'ebook-free' || book.type === 'both') && (
+                  <button className="w-full py-4 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all flex items-center justify-center gap-2">
+                    <Download size={18} /> Download PDF (Free)
+                  </button>
+                )}
+                {(book.type === 'physical' || book.type === 'both' || book.type === 'ebook-paid') && book.price ? (
+                  <button onClick={onPurchase}
+                    className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-xl bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-200`}>
+                    <ShoppingCart size={18} /> Purchase — ₵{book.price}
+                  </button>
+                ) : null}
+              </>
             )}
           </div>
         </div>
@@ -411,9 +478,12 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
   const [filter, setFilter]             = useState('All Types');
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [readingBook, setReadingBook]   = useState<Book | null>(null);
-  const [cartCount, setCartCount]       = useState(0);
+  const [checkoutBook, setCheckoutBook] = useState<Book | null>(null);
   const [showAdmin, setShowAdmin]       = useState(false);
   const [editingBook, setEditingBook]   = useState<Book | null | undefined>(undefined); // undefined = closed, null = new, Book = edit
+
+  /* Dynamic Categories */
+  const categoriesList = ['All', ...(store.bookstoreConfig?.categories?.length ? store.bookstoreConfig.categories : CATEGORIES.filter(c => c !== 'All'))];
 
   /* Admin access check */
   const permissions = store?.currentUser?.workerPermissions || [];
@@ -450,6 +520,32 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
 
   return (
     <WebsiteLayout onNavigate={onNavigate} store={store} currentPage="books">
+      {store.bookstoreConfig?.isComingSoon && !isAdmin ? (
+        <div className="min-h-screen bg-indigo-950 flex flex-col items-center justify-center p-6 text-center z-50 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10 blur-3xl bg-[url('https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=1200&q=80')] bg-cover bg-center" />
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 space-y-10 max-w-2xl">
+            <div className="w-24 h-24 bg-amber-400/10 rounded-full flex items-center justify-center mx-auto border border-amber-400/20 shadow-[0_0_80px_rgba(251,191,36,0.2)]">
+              <BookMarked size={40} className="text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none italic font-serif" style={{ fontFamily: "'Playfair Display', serif" }}>
+                Preparing <br /><span className="text-amber-400">The Library.</span>
+              </h1>
+              <p className="text-white/60 text-lg md:text-xl font-medium mt-6 leading-relaxed">
+                The SIJM Bookstore is undergoing a divine upgrade. Powerful new prophetic resources and tools are being uploaded.
+              </p>
+            </div>
+            
+            <div className="pt-10 flex flex-col items-center gap-6 border-t border-white/10">
+              <span className="text-xs font-black uppercase tracking-[0.4em] text-white/30">Connect in the meantime</span>
+              <button onClick={() => onNavigate('sermons')} className="px-10 py-5 bg-white text-indigo-950 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:bg-amber-400 transition-colors">
+                Explore Sermons
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      ) : (
+      <>
       {/* Admin Editor Modal */}
       <AnimatePresence>
         {editingBook !== undefined && (
@@ -457,6 +553,7 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
             book={editingBook}
             onSave={handleSaveBook}
             onClose={() => setEditingBook(undefined)}
+            categoriesList={categoriesList}
           />
         )}
       </AnimatePresence>
@@ -595,7 +692,7 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
 
           {/* category pills */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {CATEGORIES.map(c => (
+            {categoriesList.map((c: string) => (
               <button key={c} onClick={() => setCategory(c)}
                 className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest whitespace-nowrap transition-all border ${category === c ? 'bg-indigo-950 text-white border-indigo-950' : 'bg-white text-slate-400 border-slate-100 hover:border-indigo-200'}`}>
                 {c}
@@ -661,14 +758,38 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
 
       {/* Modals */}
       <AnimatePresence>
-        {selectedBook && !readingBook && (
+        {selectedBook && !readingBook && !checkoutBook && (
           <BookDetail key="detail" book={selectedBook} onClose={() => setSelectedBook(null)}
-            onRead={() => { setReadingBook(selectedBook); setSelectedBook(null); }} />
+            onRead={() => { setReadingBook(selectedBook); setSelectedBook(null); }}
+            onPurchase={() => { 
+              if (!store.currentUser) {
+                alert('Please sign in to purchase books.');
+                onNavigate('login');
+              } else {
+                setCheckoutBook(selectedBook); 
+                setSelectedBook(null); 
+              }
+            }} 
+          />
         )}
         {readingBook && (
           <ReaderModal key="reader" book={readingBook} onClose={() => setReadingBook(null)} />
         )}
+        {checkoutBook && (
+          <CheckoutModal 
+            key="checkout" 
+            book={checkoutBook} 
+            userEmail={store.currentUser?.email || 'guest@sijm.org'} 
+            onClose={() => setCheckoutBook(null)} 
+            onSuccess={() => { 
+               setCheckoutBook(null); 
+               alert('Payment successful! Your book is now available in your digital library.'); 
+            }} 
+          />
+        )}
       </AnimatePresence>
+      </>
+      )}
     </WebsiteLayout>
   );
 };

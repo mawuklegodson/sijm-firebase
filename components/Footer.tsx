@@ -73,8 +73,8 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, store }) => {
                 <p className="text-[9px] font-black text-amber-400 uppercase tracking-[0.4em] mt-2">{config.branding.tagline}</p>
               </div>
             </div>
-            <p className="text-white/40 text-lg font-medium leading-relaxed max-w-xs">
-              Restoring the dignity of humanity through the prophetic word and the power of the Holy Spirit.
+            <p className="text-white/40 text-lg font-medium leading-relaxed max-w-xs whitespace-pre-wrap">
+              {config.footer?.aboutText || 'Restoring the dignity of humanity through the prophetic word and the power of the Holy Spirit.'}
             </p>
             <div className="flex items-center gap-8">
               {['Facebook', 'Twitter', 'Instagram', 'YouTube'].map((social) => (
@@ -119,14 +119,13 @@ const Footer: React.FC<FooterProps> = ({ onNavigate, store }) => {
             <div className="space-y-10">
               <div className="flex items-start gap-6">
                 <MapPin size={24} className="text-amber-400 shrink-0 mt-1" />
-                <p className="text-xl font-medium text-white/60 leading-relaxed">
-                  Main Sanctuary, Sege-Ada <br />
-                  Greater Accra, Ghana
+                <p className="text-xl font-medium text-white/60 leading-relaxed whitespace-pre-wrap">
+                  {config.footer?.address || 'Main Sanctuary, Sege-Ada\nGreater Accra, Ghana'}
                 </p>
               </div>
               <div className="flex items-center gap-6">
                 <Globe size={24} className="text-amber-400 shrink-0" />
-                <p className="text-xl font-medium text-white/60">info@sijm.org</p>
+                <p className="text-xl font-medium text-white/60">{config.footer?.contactEmail || 'info@sijm.org'}</p>
               </div>
             </div>
           </div>

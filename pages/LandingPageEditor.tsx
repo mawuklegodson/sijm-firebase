@@ -16,7 +16,7 @@ interface LandingPageEditorProps {
 const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }) => {
   const { landingPageConfig, updateLandingPageConfig } = store;
   const [config, setConfig] = useState<LandingPageConfig>(landingPageConfig || DEFAULT_LANDING_PAGE_CONFIG);
-  const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'sections' | 'advanced'>('branding');
+  const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'stats' | 'about' | 'footer' | 'sections' | 'advanced'>('branding');
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [history, setHistory] = useState<LandingPageConfig[]>(landingPageConfig ? [landingPageConfig] : [DEFAULT_LANDING_PAGE_CONFIG]);
@@ -207,6 +207,30 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }
           <Layout size={14} /> Hero Section
         </button>
         <button
+          onClick={() => setActiveTab('stats')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'stats' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Plus size={14} /> Numbers
+        </button>
+        <button
+          onClick={() => setActiveTab('about')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'about' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Type size={14} /> About Text
+        </button>
+        <button
+          onClick={() => setActiveTab('footer')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'footer' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Settings size={14} /> Footer
+        </button>
+        <button
           onClick={() => setActiveTab('sections')}
           className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
             activeTab === 'sections' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
@@ -389,6 +413,181 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }
                       <p className="text-sm font-black text-indigo-900 uppercase tracking-tighter">Enable Parallax Effect</p>
                       <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">Adds depth and motion to the hero section</p>
                     </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'stats' && (
+              <motion.div 
+                key="stats"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-8"
+              >
+                <div className="space-y-6">
+                  <h3 className="text-xl font-black text-indigo-950 uppercase tracking-tighter">Achievement Counters</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {[1, 2, 3, 4].map((num) => (
+                      <div key={num} className="space-y-4 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Statistic {num}</label>
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            placeholder={"Value (e.g. 10K+)"}
+                            value={(config.statsCounter as any)?.[`stat${num}Value`] || ''}
+                            onChange={(e) => {
+                              const newStats = { ...(config.statsCounter || {}), [`stat${num}Value`]: e.target.value };
+                              const newConfig = { ...config, statsCounter: newStats as any };
+                              setConfig(newConfig);
+                            }}
+                            className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl text-sm font-bold focus:border-indigo-600 transition-all"
+                          />
+                          <input
+                            type="text"
+                            placeholder={"Label (e.g. Members)"}
+                            value={(config.statsCounter as any)?.[`stat${num}Label`] || ''}
+                            onChange={(e) => {
+                              const newStats = { ...(config.statsCounter || {}), [`stat${num}Label`]: e.target.value };
+                              const newConfig = { ...config, statsCounter: newStats as any };
+                              setConfig(newConfig);
+                            }}
+                            className="w-full px-4 py-3 bg-white border border-gray-100 rounded-xl text-sm font-bold focus:border-indigo-600 transition-all"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'about' && (
+              <motion.div 
+                key="about"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-8"
+              >
+                <div className="space-y-6">
+                  <h3 className="text-xl font-black text-indigo-950 uppercase tracking-tighter">About Section Content</h3>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Section Heading</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. The SIJM Mandate"
+                      value={config.aboutSection?.heading || ''}
+                      onChange={(e) => {
+                        const newConfig = { ...config, aboutSection: { ...(config.aboutSection || {} as any), heading: e.target.value } };
+                        setConfig(newConfig);
+                      }}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-md font-bold focus:border-indigo-600 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Subheading</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Divine Restoration."
+                      value={config.aboutSection?.subheading || ''}
+                      onChange={(e) => {
+                        const newConfig = { ...config, aboutSection: { ...(config.aboutSection || {} as any), subheading: e.target.value } };
+                        setConfig(newConfig);
+                      }}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-xl font-black focus:border-indigo-600 transition-all"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Main Paragraph</label>
+                    <textarea
+                      placeholder="We are a global prophetic movement..."
+                      value={config.aboutSection?.paragraph1 || ''}
+                      onChange={(e) => {
+                        const newConfig = { ...config, aboutSection: { ...(config.aboutSection || {} as any), paragraph1: e.target.value } };
+                        setConfig(newConfig);
+                      }}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium focus:border-indigo-600 transition-all h-32"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Blockquote Text</label>
+                    <textarea
+                      placeholder="Restoration is not a process..."
+                      value={config.aboutSection?.paragraph2 || ''}
+                      onChange={(e) => {
+                        const newConfig = { ...config, aboutSection: { ...(config.aboutSection || {} as any), paragraph2: e.target.value } };
+                        setConfig(newConfig);
+                      }}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium italic focus:border-indigo-600 transition-all h-24"
+                    />
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'footer' && (
+              <motion.div 
+                key="footer"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-8"
+              >
+                <div className="space-y-6">
+                  <h3 className="text-xl font-black text-indigo-950 uppercase tracking-tighter">Footer Data</h3>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ministry About Text</label>
+                    <textarea
+                      placeholder="Restoring the dignity of humanity..."
+                      value={config.footer?.aboutText || ''}
+                      onChange={(e) => {
+                        const newConfig = { ...config, footer: { ...(config.footer || {} as any), aboutText: e.target.value } };
+                        setConfig(newConfig);
+                      }}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium focus:border-indigo-600 transition-all h-24"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Email</label>
+                      <input
+                        type="email"
+                        placeholder="info@sijm.org"
+                        value={config.footer?.contactEmail || ''}
+                        onChange={(e) => {
+                          const newConfig = { ...config, footer: { ...(config.footer || {} as any), contactEmail: e.target.value } };
+                          setConfig(newConfig);
+                        }}
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold focus:border-indigo-600 transition-all"
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Contact Phone (Currently hidden in UI)</label>
+                      <input
+                        type="text"
+                        placeholder="+233..."
+                        value={config.footer?.contactPhone || ''}
+                        onChange={(e) => {
+                          const newConfig = { ...config, footer: { ...(config.footer || {} as any), contactPhone: e.target.value } };
+                          setConfig(newConfig);
+                        }}
+                        className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold focus:border-indigo-600 transition-all"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Headquarters Address</label>
+                    <textarea
+                      placeholder="Main Sanctuary..."
+                      value={config.footer?.address || ''}
+                      onChange={(e) => {
+                        const newConfig = { ...config, footer: { ...(config.footer || {} as any), address: e.target.value } };
+                        setConfig(newConfig);
+                      }}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium focus:border-indigo-600 transition-all h-24"
+                    />
                   </div>
                 </div>
               </motion.div>

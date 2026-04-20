@@ -596,6 +596,21 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
   updatedAt: new Date().toISOString(),
 };
 
+export const DEFAULT_BOOKSTORE_CONFIG: BookstoreConfig = {
+  id: 'main',
+  isComingSoon: false,
+  categories: ['All', 'Prophetic', 'Spiritual Warfare', 'Devotional', 'Finance & Faith', 'Ministry', 'Inner Healing'],
+  updatedAt: new Date().toISOString(),
+};
+
+export const DEFAULT_PAYMENT_CONFIG: PaymentConfig = {
+  id: 'main',
+  stripeEnabled: true,
+  paystackEnabled: true,
+  currency: 'GHS',
+  updatedAt: new Date().toISOString(),
+};
+
 export function useCMSStore() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -613,6 +628,8 @@ export function useCMSStore() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [activities, setActivities] = useState<SystemActivity[]>([]);
   const [landingPageConfig, setLandingPageConfig] = useState<LandingPageConfig | null>(null);
+  const [bookstoreConfig, setBookstoreConfig] = useState<BookstoreConfig | null>(null);
+  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -770,6 +787,8 @@ export function useCMSStore() {
   useEffect(() => {
     if (isMockMode) {
       setLandingPageConfig(DEFAULT_LANDING_PAGE_CONFIG);
+      setBookstoreConfig(DEFAULT_BOOKSTORE_CONFIG);
+      setPaymentConfig(DEFAULT_PAYMENT_CONFIG);
       setEvents(mockEvents || []); // Fallback to empty if not defined
       setAnnouncements(mockAnnouncements);
       return;
@@ -845,6 +864,24 @@ export function useCMSStore() {
         setLandingPageConfig(DEFAULT_LANDING_PAGE_CONFIG);
       }
     }, (err) => handleFirestoreError(err, OperationType.GET, 'landingPageConfigs/main')));
+
+    // Bookstore Config
+    unsubs.push(onSnapshot(doc(db, 'settings', 'bookstore'), (doc) => {
+      if (doc.exists()) {
+        setBookstoreConfig(doc.data() as BookstoreConfig);
+      } else {
+        setBookstoreConfig(DEFAULT_BOOKSTORE_CONFIG);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/bookstore')));
+
+    // Payment Config
+    unsubs.push(onSnapshot(doc(db, 'settings', 'payment'), (doc) => {
+      if (doc.exists()) {
+        setPaymentConfig(doc.data() as PaymentConfig);
+      } else {
+        setPaymentConfig(DEFAULT_PAYMENT_CONFIG);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/payment')));
 
     return () => unsubs.forEach(unsub => unsub());
   }, [isMockMode]);
@@ -2275,7 +2312,23 @@ export function useCMSStore() {
       }
       await setDoc(doc(db, 'landingPageConfigs', 'main'), config);
     },
+    updateBookstoreConfig: async (config: BookstoreConfig) => {
+      if (isMockMode) {
+        setBookstoreConfig(config);
+        return;
+      }
+      await setDoc(doc(db, 'settings', 'bookstore'), config);
+    },
+    updatePaymentConfig: async (config: PaymentConfig) => {
+      if (isMockMode) {
+        setPaymentConfig(config);
+        return;
+      }
+      await setDoc(doc(db, 'settings', 'payment'), config);
+    },
     landingPageConfig,
+    bookstoreConfig,
+    paymentConfig,
     refresh: () => {
       if (isMockMode) {
         setAttendance(mockAttendance);

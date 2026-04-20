@@ -282,6 +282,24 @@ export interface LandingPageConfig {
       fontFamily: string;
     };
   };
+  statsCounter?: {
+    stat1Label: string; stat1Value: string;
+    stat2Label: string; stat2Value: string;
+    stat3Label: string; stat3Value: string;
+    stat4Label: string; stat4Value: string;
+  };
+  aboutSection?: {
+    heading: string;
+    subheading: string;
+    paragraph1: string;
+    paragraph2: string;
+  };
+  footer?: {
+    aboutText: string;
+    contactEmail: string;
+    contactPhone: string;
+    address: string;
+  };
   sections: LandingPageSection[];
   seo?: {
     title: string;
@@ -303,6 +321,21 @@ export interface LandingPageSection {
   videoUrl?: string;
   order: number;
   active: boolean;
+}
+
+export interface BookstoreConfig {
+  id: string;
+  isComingSoon: boolean;
+  categories: string[];
+  updatedAt: string;
+}
+
+export interface PaymentConfig {
+  id: string;
+  stripeEnabled: boolean;
+  paystackEnabled: boolean;
+  currency: string;
+  updatedAt: string;
 }
 
 export interface Group {
