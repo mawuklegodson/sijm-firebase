@@ -593,16 +593,11 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
                 </div>
               )}
             </div>
-            {/* cart */}
-            <button className="relative flex items-center gap-3 bg-white/10 border border-white/10 rounded-2xl px-6 py-4 hover:bg-white/20 transition-all">
-              <ShoppingCart size={20} className="text-amber-400" />
-              <span className="text-white font-black text-sm">Cart</span>
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-amber-400 text-indigo-950 rounded-full text-[9px] font-black flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </button>
+            {/* cart - hidden for pure direct checkout flow */}
+            <div className="hidden md:flex items-center gap-3 bg-white/10 border border-white/10 rounded-2xl px-6 py-4">
+              <ShoppingCart size={20} className="text-amber-400 opacity-50" />
+              <span className="text-white/50 font-black text-sm uppercase tracking-widest">Store Live</span>
+            </div>
           </div>
         </div>
       </section>
