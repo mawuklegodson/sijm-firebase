@@ -8,7 +8,8 @@ import {
 } from 'lucide-react';
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import CheckoutModal from '../components/CheckoutModal.tsx';
-import { WorkerPermission } from '../types.ts';
+import ReviewSystem from '../components/ReviewSystem.tsx';
+import { WorkerPermission, Review } from '../types.ts';
 
 /* ──────────── types ──────────── */
 interface Book {
@@ -85,11 +86,20 @@ const FILTERS = ['All Types', 'Free eBooks', 'Paid Books', 'Physical Books'];
 const BOOK_TYPES: Book['type'][] = ['ebook-free', 'ebook-paid', 'physical', 'both'];
 
 /* ──────────── star rating ──────────── */
-const Stars = ({ rating }: { rating: number }) => (
-  <div className="flex gap-0.5">
-    {[1,2,3,4,5].map(i => <Star key={i} size={12} fill={i <= rating ? '#f59e0b' : 'none'} stroke={i <= rating ? '#f59e0b' : '#cbd5e1'} />)}
-  </div>
-);
+const Stars = ({ rating, reviews = [] }: { rating: number, reviews?: Review[] }) => {
+  const avg = reviews.length > 0 
+    ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length 
+    : rating;
+  
+  return (
+    <div className="flex flex-col gap-0.5">
+      <div className="flex gap-0.5">
+        {[1,2,3,4,5].map(i => <Star key={i} size={10} fill={i <= Math.round(avg) ? '#f59e0b' : 'none'} stroke={i <= Math.round(avg) ? '#f59e0b' : '#cbd5e1'} />)}
+      </div>
+      <span className="text-[7px] font-black uppercase tracking-widest text-slate-400 mt-1">{reviews.length} Verified Reviews</span>
+    </div>
+  );
+};
 
 /* ──────────── type badge ──────────── */
 const TypeBadge = ({ type }: { type: Book['type'] }) => {
@@ -389,7 +399,13 @@ const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
 };
 
 /* ──────────── book detail modal ──────────── */
-const BookDetail = ({ book, onClose, onRead, onPurchase }: { book: Book; onClose: () => void; onRead: () => void; onPurchase: () => void }) => {
+const BookDetail = ({ book, onClose, onRead, onPurchase, reviews = [] }: { 
+  book: Book; 
+  onClose: () => void; 
+  onRead: () => void; 
+  onPurchase: () => void;
+  reviews?: Review[];
+}) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-indigo-950/60 backdrop-blur-sm">
@@ -417,8 +433,8 @@ const BookDetail = ({ book, onClose, onRead, onPurchase }: { book: Book; onClose
             <p className="text-slate-400 text-sm font-medium mt-1">by {book.author}</p>
           </div>
           <div className="flex items-center gap-4">
-            <Stars rating={book.rating} />
-            <span className="text-slate-400 text-xs">{book.reviews} reviews</span>
+            <Stars rating={book.rating} reviews={reviews} />
+            <span className="text-slate-400 text-xs">{reviews.length || book.reviews} reviews</span>
             <span className="text-slate-300">·</span>
             <span className="text-slate-400 text-xs">{book.pages} pages</span>
           </div>
@@ -461,6 +477,15 @@ const BookDetail = ({ book, onClose, onRead, onPurchase }: { book: Book; onClose
                 ) : null}
               </>
             )}
+          </div>
+
+          <div className="pt-8 border-t border-gray-100">
+            <ReviewSystem 
+              bookId={book.id} 
+              reviews={store.reviews || []} 
+              currentUser={store.currentUser} 
+              addReview={store.addReview} 
+            />
           </div>
         </div>
       </motion.div>
@@ -650,10 +675,10 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
                     <div className="flex gap-2 flex-wrap"><TypeBadge type={book.type} /></div>
                     <h3 className="font-black text-indigo-950 text-xl tracking-tight group-hover:text-indigo-600 transition-colors leading-tight">{book.title}</h3>
                     <p className="text-slate-400 text-xs font-medium">{book.author}</p>
-                    <Stars rating={book.rating} />
+                    <Stars rating={book.rating} reviews={store.reviews?.filter((r: Review) => r.bookId === book.id)} />
                   </div>
                   <div className="flex items-center gap-3 mt-4">
-                    {book.price && <span className="text-indigo-950 font-black text-lg">₵{book.price}</span>}
+                    {book.price && !book.isComingSoon && <span className="text-indigo-950 font-black text-lg">₵{book.price}</span>}
                     <span className="flex items-center gap-1 text-[9px] font-black text-indigo-600 uppercase tracking-widest">
                       View Book <ChevronRight size={12} />
                     </span>
@@ -719,8 +744,10 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
                   </div>
                   <p className="text-slate-500 text-xs leading-relaxed line-clamp-2">{book.description}</p>
                   <div className="flex items-center justify-between pt-2 border-t border-slate-50">
-                    {book.price ? (
+                    {book.price && !book.isComingSoon ? (
                       <span className="text-indigo-950 font-black text-base">₵{book.price}</span>
+                    ) : book.isComingSoon ? (
+                      <span className="text-amber-600 font-black text-[9px] uppercase tracking-widest">Coming Soon</span>
                     ) : (
                       <span className="text-emerald-600 font-black text-xs uppercase tracking-widest">Free</span>
                     )}
@@ -754,7 +781,11 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
       {/* Modals */}
       <AnimatePresence>
         {selectedBook && !readingBook && !checkoutBook && (
-          <BookDetail key="detail" book={selectedBook} onClose={() => setSelectedBook(null)}
+          <BookDetail 
+            key="detail" 
+            book={selectedBook} 
+            reviews={store.reviews?.filter((r: Review) => r.bookId === selectedBook.id)}
+            onClose={() => setSelectedBook(null)}
             onRead={() => { setReadingBook(selectedBook); setSelectedBook(null); }}
             onPurchase={() => { 
               if (!store.currentUser) {
@@ -776,6 +807,7 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
             book={checkoutBook} 
             userEmail={store.currentUser?.email || 'guest@sijm.org'} 
             onClose={() => setCheckoutBook(null)} 
+            store={store}
             onSuccess={() => { 
                setCheckoutBook(null); 
                alert('Payment successful! Your book is now available in your digital library.'); 

@@ -5,8 +5,11 @@ import { DEFAULT_LANDING_PAGE_CONFIG } from '../store.ts';
 import { 
   Save, Plus, Trash2, MoveUp, MoveDown, Layout, Type, Image as ImageIcon, 
   Video, MousePointer2, Settings, Palette, Eye, Code, Layers, 
-  Monitor, Smartphone, Tablet, Undo, Redo, Copy, Link, ChevronRight
+  Monitor, Smartphone, Tablet, Undo, Redo, Copy, Link, ChevronRight,
+  ShoppingBag, Megaphone
 } from 'lucide-react';
+import BookstoreEditor from '../components/BookstoreEditor.tsx';
+import BroadcastEditor from './BroadcastEditor.tsx';
 
 interface LandingPageEditorProps {
   store: any;
@@ -16,7 +19,7 @@ interface LandingPageEditorProps {
 const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }) => {
   const { landingPageConfig, updateLandingPageConfig } = store;
   const [config, setConfig] = useState<LandingPageConfig>(landingPageConfig || DEFAULT_LANDING_PAGE_CONFIG);
-  const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'stats' | 'about' | 'footer' | 'sections' | 'advanced'>('branding');
+  const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'stats' | 'about' | 'footer' | 'sections' | 'advanced' | 'bookstore' | 'broadcasts'>('branding');
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [history, setHistory] = useState<LandingPageConfig[]>(landingPageConfig ? [landingPageConfig] : [DEFAULT_LANDING_PAGE_CONFIG]);
@@ -245,6 +248,22 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }
           }`}
         >
           <Code size={14} /> Advanced
+        </button>
+        <button
+          onClick={() => setActiveTab('bookstore')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'bookstore' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <ShoppingBag size={14} /> Bookstore
+        </button>
+        <button
+          onClick={() => setActiveTab('broadcasts')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'broadcasts' ? 'bg-indigo-600 text-white shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Megaphone size={14} /> Broadcasts
         </button>
       </div>
 
@@ -718,6 +737,29 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }
                     />
                   </div>
                 </div>
+              </motion.div>
+            )}
+            {activeTab === 'bookstore' && (
+              <motion.div 
+                key="bookstore"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm"
+              >
+                <BookstoreEditor store={store} />
+              </motion.div>
+            )}
+
+            {activeTab === 'broadcasts' && (
+              <motion.div 
+                key="broadcasts"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }}
+                className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm"
+              >
+                <BroadcastEditor store={store} />
               </motion.div>
             )}
           </AnimatePresence>

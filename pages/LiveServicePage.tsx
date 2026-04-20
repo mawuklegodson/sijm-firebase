@@ -362,12 +362,25 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
     setTimeout(() => setPrayerSent(false), 3000);
   };
 
-  const handleGive = () => {
-    const amount = selectedAmount || parseInt(customAmount);
-    if (!amount) return;
+  const handleGive = async () => {
+    const amountVal = selectedAmount || parseInt(customAmount);
+    if (!amountVal) return;
+    
+    // Persist to Firestore
+    if (store.addDonation) {
+      await store.addDonation({
+        donorName: store?.currentUser?.fullName || 'Anonymous Live Donor',
+        donorEmail: store?.currentUser?.email || 'anonymous@live.sijm',
+        amount: amountVal,
+        category: 'Live Offering',
+        paymentMethod: 'Mobile Money (Live)',
+        userId: store?.currentUser?.id
+      });
+    }
+
     const msg: LiveMessage = {
       id: Date.now().toString(), name: store?.currentUser?.fullName || 'A member',
-      text: `Gave ₵${amount} — God bless SIJM! 🙏`, type: 'gift', avatar: '💝', time: 'just now'
+      text: `Gave ₵${amountVal} — God bless SIJM! 🙏`, type: 'gift', avatar: '💝', time: 'just now'
     };
     setMessages(prev => [...prev, msg]);
     setGivingDone(true);

@@ -395,12 +395,71 @@ export interface SermonAnswer {
   likes: string[];
 }
 
+export interface Broadcast {
+  id: string;
+  message: string;
+  type: 'info' | 'urgent' | 'promo';
+  active: boolean;
+  isClosable: boolean;
+  startDate?: string;
+  endDate?: string;
+  pushEnabled?: boolean;
+  createdAt: string;
+}
+
+export interface Order {
+  id: string;
+  userId?: string;
+  userEmail: string;
+  userName: string;
+  items: {
+    id: string;
+    title: string;
+    price: number;
+    type: 'Digital' | 'Physical';
+  }[];
+  total: number;
+  currency: string;
+  paymentGateway: 'Stripe' | 'Paystack';
+  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+  shippingAddress?: {
+    street: string;
+    city: string;
+    state: string;
+    country: string;
+    zip: string;
+  };
+  createdAt: string;
+}
+
+export interface Donation {
+  id: string;
+  userId?: string;
+  userEmail: string;
+  userName: string;
+  amount: number;
+  currency: string;
+  category: string;
+  paymentGateway: 'Stripe' | 'Paystack';
+  createdAt: string;
+}
+
+export interface Review {
+  id: string;
+  bookId: string;
+  userId: string;
+  userName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
 export interface Notification {
   id: string;
   userId: string;
   title: string;
   message: string;
-  type: 'question' | 'answer' | 'like' | 'system';
+  type: 'question' | 'answer' | 'like' | 'system' | 'broadcast';
   link?: string;
   isRead: boolean;
   createdAt: string;

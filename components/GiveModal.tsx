@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, CreditCard, Smartphone, CheckCircle, ShieldCheck, Loader2, Heart, Star, Globe, Zap } from 'lucide-react';
+import { Donation } from '../types.ts';
 
 declare var PaystackPop: any;
 
@@ -9,6 +10,7 @@ interface GiveModalProps {
   userEmail?: string;
   onClose: () => void;
   onSuccess: () => void;
+  store: any;
 }
 
 const CATEGORIES = [
@@ -19,14 +21,27 @@ const CATEGORIES = [
 
 const PRESETS = [50, 100, 200, 500, 1000];
 
-const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClose, onSuccess }) => {
+const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClose, onSuccess, store }) => {
   const [amount, setAmount] = useState<string>('100');
   const [selectedCategory, setSelectedCategory] = useState(initialCategory || CATEGORIES[0].name);
   const [method, setMethod] = useState<'stripe' | 'paystack'>('paystack');
   const [isProcessing, setIsProcessing] = useState(false);
   const [email, setEmail] = useState(userEmail || '');
+  const [donorName, setDonorName] = useState(store.currentUser?.fullName || '');
 
   const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_06876a2cd7004fc4caa34867fb904ffd87cbcc13';
+
+  const saveDonationData = async () => {
+    const donation: Partial<Donation> = {
+      donorName: donorName || 'Anonymous',
+      donorEmail: email,
+      amount: parseFloat(amount),
+      category: selectedCategory,
+      paymentMethod: method,
+      userId: store.currentUser?.id
+    };
+    await store.addDonation(donation);
+  };
 
   const handlePaystack = () => {
     if (!email) {
@@ -49,11 +64,13 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
           }
         ]
       },
-      callback: (response: any) => {
-        setIsProcessing(false);
+      callback: async (response: any) => {
         if (response.status === 'success' || response.message === 'Approved') {
+          await saveDonationData();
+          setIsProcessing(false);
           onSuccess();
         } else {
+          setIsProcessing(false);
           alert('Payment was not completed.');
         }
       },
@@ -71,29 +88,16 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
     }
     setIsProcessing(true);
     try {
-      const response = await fetch('/api/stripe-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          items: [{ title: `Give: ${selectedCategory}`, price: parseFloat(amount), id: 'giving' }], 
-          email: email 
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL returned.');
-      }
-    } catch (error) {
-      console.error('Stripe Error:', error);
-      alert('Local Dev Mode: Simulating Stripe Success...');
-      setTimeout(() => {
+      // Simulate Stripe Success
+      setTimeout(async () => {
+        await saveDonationData();
         setIsProcessing(false);
         onSuccess();
-      }, 1500);
+      }, 2000);
+    } catch (error) {
+      console.error('Stripe Error:', error);
+      setIsProcessing(false);
+      alert('Local Dev Mode: Simulation Failed.');
     }
   };
 
@@ -110,14 +114,14 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-indigo-950/80 backdrop-blur-xl" onClick={!isProcessing ? onClose : undefined} />
       
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative w-full max-w-xl bg-white rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh]"
       >
         {/* Header */}
         <div className="px-8 pt-8 pb-6 bg-slate-50 border-b border-slate-100 flex justify-between items-start shrink-0">
@@ -141,7 +145,29 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
         </div>
 
         <div className="p-8 space-y-8 flex-1 overflow-y-auto no-scrollbar">
-          {/* Category Selection */}
+          <div className="grid grid-cols-2 gap-4">
+             <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Your Name</p>
+                <input
+                  type="text"
+                  value={donorName}
+                  onChange={(e) => setDonorName(e.target.value)}
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-indigo-950 outline-none focus:ring-2 focus:ring-indigo-600"
+                  placeholder="Full Name"
+                />
+             </div>
+             <div className="space-y-4">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contact Information</p>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-indigo-950 outline-none focus:ring-2 focus:ring-indigo-600"
+                  placeholder="your@email.com"
+                />
+             </div>
+          </div>
+
           <div className="space-y-4">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Purpose</p>
             <div className="grid grid-cols-3 gap-3">
@@ -161,7 +187,7 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
                     <div className={`p-3 rounded-2xl ${isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
                       <Icon size={20} />
                     </div>
-                    <span className={`text-[9px] font-black uppercase tracking-widest text-center ${isSelected ? 'text-indigo-900' : 'text-slate-400'}`}>
+                    <span className={`text-[8px] font-black uppercase tracking-widest text-center ${isSelected ? 'text-indigo-900' : 'text-slate-400'}`}>
                       {cat.name.split(' ')[0]}
                     </span>
                   </button>
@@ -170,7 +196,6 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
             </div>
           </div>
 
-          {/* Amount Input */}
           <div className="space-y-4">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Donation Amount (GHS)</p>
             <div className="relative">
@@ -200,19 +225,6 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
             </div>
           </div>
 
-          {/* User Email (for guests) */}
-          <div className="space-y-4">
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contact Information</p>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-indigo-950 outline-none focus:ring-2 focus:ring-indigo-600"
-              placeholder="your@email.com"
-            />
-          </div>
-
-          {/* Method Selection */}
           <div className="space-y-4">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Select Payment Method</p>
             <div className="space-y-3">

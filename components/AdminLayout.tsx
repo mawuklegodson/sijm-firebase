@@ -68,6 +68,8 @@ const AdminLayout: React.FC<Props> = ({ children, currentUser, onLogout, current
     { id: 'live', label: 'Live Service', icon: Radio },
     { id: 'books', label: 'Books Manager', icon: BookOpen },
     ...(currentUser.workerPermissions.includes(WorkerPermission.SUPER_ADMIN) ? [
+      { id: 'financials', label: 'Financial Hub', icon: FileBarChart },
+      { id: 'broadcasts', label: 'Site Broadcasts', icon: Megaphone },
       { id: 'settings', label: 'Settings', icon: Settings }
     ] : []),
   ];

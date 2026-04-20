@@ -13,6 +13,8 @@ import EventsPage from './pages/EventsPage.tsx';
 import GivingPage from './pages/GivingPage.tsx';
 import LandingPageEditor from './pages/LandingPageEditor.tsx';
 import LoginPage from './pages/LoginPage.tsx';
+import BroadcastEditor from './pages/BroadcastEditor.tsx';
+import FinancialDashboard from './pages/FinancialDashboard.tsx';
 import AdminLayout from './components/AdminLayout.tsx';
 import UsherLayout from './components/UsherLayout.tsx';
 import MemberLayout from './components/MemberLayout.tsx';
@@ -38,6 +40,7 @@ import LiveServicePage from './pages/LiveServicePage.tsx';
 import BooksPage from './pages/BooksPage.tsx';
 import { WifiOff, Loader2 } from 'lucide-react';
 import { isMockMode, firebaseConfig } from './lib/firebase.ts';
+import GlobalAnnounceBar from './components/GlobalAnnounceBar.tsx';
 
 
 const App: React.FC = () => {
@@ -200,6 +203,8 @@ const App: React.FC = () => {
         case 'assets': return <AssetsPage store={store} navigate={setCurrentPage} />;
         case 'ushers': return <UshersPage store={store} navigate={setCurrentPage} />;
         case 'reports': return <ReportsPage store={store} navigate={setCurrentPage} />;
+        case 'financials': return <FinancialDashboard store={store} />;
+        case 'broadcasts': return <BroadcastEditor store={store} />;
         case 'settings': return (isSuperAdmin || isAdmin) ? <SettingsPage store={store} navigate={setCurrentPage} /> : <AdminDashboard store={store} navigate={setCurrentPage} />;
         case 'downloads': return <DownloadsPage store={store} isAdmin={isAdmin || isMedia} navigate={setCurrentPage} />;
         case 'groups': return <GroupsPage navigate={setCurrentPage} />;
@@ -331,6 +336,8 @@ const App: React.FC = () => {
           <span className="text-sm font-bold">Offline Mode: Data will be saved locally</span>
         </div>
       )}
+      
+      <GlobalAnnounceBar broadcasts={store.broadcasts} />
 
       {renderContent()}
 

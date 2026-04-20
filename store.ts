@@ -102,10 +102,14 @@ import {
   Resource,
   LandingPageConfig,
   SermonAccessLevel,
-  ChurchEvent,
-  PrayerRequest,
   PrayerNote,
-  Group
+  Group,
+  Broadcast,
+  Order,
+  Donation,
+  Review,
+  BookstoreConfig,
+  PaymentConfig
 } from './types.ts';
 import { ASSET_CATEGORIES } from './constants.tsx';
 import {
@@ -630,6 +634,10 @@ export function useCMSStore() {
   const [landingPageConfig, setLandingPageConfig] = useState<LandingPageConfig | null>(null);
   const [bookstoreConfig, setBookstoreConfig] = useState<BookstoreConfig | null>(null);
   const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -830,6 +838,65 @@ export function useCMSStore() {
         ...doc.data()
       } as Group)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'groups')));
+
+    // Landing Page Config
+    unsubs.push(onSnapshot(doc(db, 'landingPageConfigs', 'main'), (doc) => {
+      if (doc.exists()) {
+        setLandingPageConfig(doc.data() as LandingPageConfig);
+      } else {
+        setLandingPageConfig(DEFAULT_LANDING_PAGE_CONFIG);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'landingPageConfigs/main')));
+
+    // Bookstore Config
+    unsubs.push(onSnapshot(doc(db, 'settings', 'bookstore'), (doc) => {
+      if (doc.exists()) {
+        setBookstoreConfig(doc.data() as BookstoreConfig);
+      } else {
+        setBookstoreConfig(DEFAULT_BOOKSTORE_CONFIG);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/bookstore')));
+
+    // Payment Config
+    unsubs.push(onSnapshot(doc(db, 'settings', 'payment'), (doc) => {
+      if (doc.exists()) {
+        setPaymentConfig(doc.data() as PaymentConfig);
+      } else {
+        setPaymentConfig(DEFAULT_PAYMENT_CONFIG);
+      }
+    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/payment')));
+
+    // Broadcasts
+    unsubs.push(onSnapshot(collection(db, 'broadcasts'), (snapshot) => {
+      setBroadcasts(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Broadcast)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'broadcasts')));
+
+    // Orders
+    unsubs.push(onSnapshot(collection(db, 'orders'), (snapshot) => {
+      setOrders(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Order)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'orders')));
+
+    // Donations
+    unsubs.push(onSnapshot(collection(db, 'donations'), (snapshot) => {
+      setDonations(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Donation)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'donations')));
+
+    // Reviews
+    unsubs.push(onSnapshot(collection(db, 'reviews'), (snapshot) => {
+      setReviews(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Review)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'reviews')));
 
     // Settings
     unsubs.push(onSnapshot(doc(db, 'settings', 'global'), (doc) => {
@@ -2326,6 +2393,51 @@ export function useCMSStore() {
       }
       await setDoc(doc(db, 'settings', 'payment'), config);
     },
+    addBroadcast: async (b: Partial<Broadcast>) => {
+      if (isMockMode) return;
+      await addDoc(collection(db, 'broadcasts'), {
+        ...b,
+        createdAt: new Date().toISOString()
+      });
+    },
+    updateBroadcast: async (id: string, b: Partial<Broadcast>) => {
+      if (isMockMode) return;
+      await updateDoc(doc(db, 'broadcasts', id), b);
+    },
+    deleteBroadcast: async (id: string) => {
+      if (isMockMode) return;
+      await deleteDoc(doc(db, 'broadcasts', id));
+    },
+    addOrder: async (o: Partial<Order>) => {
+      if (isMockMode) return;
+      await addDoc(collection(db, 'orders'), {
+        ...o,
+        status: o.status || 'Pending',
+        createdAt: new Date().toISOString()
+      });
+    },
+    updateOrderStatus: async (id: string, status: Order['status']) => {
+      if (isMockMode) return;
+      await updateDoc(doc(db, 'orders', id), { status });
+    },
+    addDonation: async (d: Partial<Donation>) => {
+      if (isMockMode) return;
+      await addDoc(collection(db, 'donations'), {
+        ...d,
+        createdAt: new Date().toISOString()
+      });
+    },
+    addReview: async (r: Partial<Review>) => {
+      if (isMockMode) return;
+      await addDoc(collection(db, 'reviews'), {
+        ...r,
+        createdAt: new Date().toISOString()
+      });
+    },
+    broadcasts,
+    orders,
+    donations,
+    reviews,
     landingPageConfig,
     bookstoreConfig,
     paymentConfig,

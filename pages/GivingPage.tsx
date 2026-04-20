@@ -146,6 +146,7 @@ const GivingPage: React.FC<{ onNavigate: (page: string) => void, store: any }> =
             initialCategory={selectedCategory}
             userEmail={store.currentUser?.email}
             onClose={() => setIsGiveModalOpen(false)}
+            store={store}
             onSuccess={() => {
               setIsGiveModalOpen(false);
               alert('Thank you for your generous partnership! Your contribution will make a significant impact.');
