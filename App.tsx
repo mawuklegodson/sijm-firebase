@@ -203,8 +203,8 @@ const App: React.FC = () => {
         case 'assets': return <AssetsPage store={store} navigate={setCurrentPage} />;
         case 'ushers': return <UshersPage store={store} navigate={setCurrentPage} />;
         case 'reports': return <ReportsPage store={store} navigate={setCurrentPage} />;
-        case 'financials': return <FinancialDashboard store={store} />;
-        case 'broadcasts': return <BroadcastEditor store={store} />;
+        case 'financials': return <FinancialDashboard store={store} currentUser={store.currentUser} onLogout={store.logout} navigate={setCurrentPage} />;
+        case 'broadcasts': return <AnnouncementsPage store={store} navigate={setCurrentPage} defaultView="broadcasts" />;
         case 'settings': return (isSuperAdmin || isAdmin) ? <SettingsPage store={store} navigate={setCurrentPage} /> : <AdminDashboard store={store} navigate={setCurrentPage} />;
         case 'downloads': return <DownloadsPage store={store} isAdmin={isAdmin || isMedia} navigate={setCurrentPage} />;
         case 'groups': return <GroupsPage navigate={setCurrentPage} />;

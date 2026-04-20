@@ -638,6 +638,7 @@ export function useCMSStore() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [donations, setDonations] = useState<Donation[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [books, setBooks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -898,6 +899,14 @@ export function useCMSStore() {
       } as Review)).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'reviews')));
 
+    // Books
+    unsubs.push(onSnapshot(collection(db, 'books'), (snapshot) => {
+      setBooks(snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as any)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'books')));
+
     // Settings
     unsubs.push(onSnapshot(doc(db, 'settings', 'global'), (doc) => {
       if (doc.exists()) {
@@ -922,33 +931,6 @@ export function useCMSStore() {
         }
       }
     }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/global')));
-
-    // Landing Page
-    unsubs.push(onSnapshot(doc(db, 'landingPageConfigs', 'main'), (doc) => {
-      if (doc.exists()) {
-        setLandingPageConfig(doc.data() as LandingPageConfig);
-      } else {
-        setLandingPageConfig(DEFAULT_LANDING_PAGE_CONFIG);
-      }
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'landingPageConfigs/main')));
-
-    // Bookstore Config
-    unsubs.push(onSnapshot(doc(db, 'settings', 'bookstore'), (doc) => {
-      if (doc.exists()) {
-        setBookstoreConfig(doc.data() as BookstoreConfig);
-      } else {
-        setBookstoreConfig(DEFAULT_BOOKSTORE_CONFIG);
-      }
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/bookstore')));
-
-    // Payment Config
-    unsubs.push(onSnapshot(doc(db, 'settings', 'payment'), (doc) => {
-      if (doc.exists()) {
-        setPaymentConfig(doc.data() as PaymentConfig);
-      } else {
-        setPaymentConfig(DEFAULT_PAYMENT_CONFIG);
-      }
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/payment')));
 
     return () => unsubs.forEach(unsub => unsub());
   }, [isMockMode]);
@@ -2434,10 +2416,29 @@ export function useCMSStore() {
         createdAt: new Date().toISOString()
       });
     },
+    addBook: async (b: any) => {
+      if (isMockMode) return;
+      await addDoc(collection(db, 'books'), {
+        ...b,
+        createdAt: new Date().toISOString()
+      });
+    },
+    updateBook: async (id: string, b: any) => {
+      if (isMockMode) return;
+      await updateDoc(doc(db, 'books', id), {
+        ...b,
+        updatedAt: new Date().toISOString()
+      });
+    },
+    deleteBook: async (id: string) => {
+      if (isMockMode) return;
+      await deleteDoc(doc(db, 'books', id));
+    },
     broadcasts,
     orders,
     donations,
     reviews,
+    books,
     landingPageConfig,
     bookstoreConfig,
     paymentConfig,

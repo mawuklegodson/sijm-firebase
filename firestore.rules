@@ -404,6 +404,40 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // ------------------- BROADCASTS -------------------
+    match /broadcasts/{broadcastId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ------------------- ORDERS -------------------
+    match /orders/{orderId} {
+      // Users can read their own orders, super admins can read all
+      allow read: if isSuperAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow write: if isSignedIn(); // Allow creation; updates restricted below
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // ------------------- DONATIONS -------------------
+    match /donations/{donationId} {
+      allow read: if isSuperAdmin();
+      allow write: if isSignedIn() || true; // Public can give, but we track userId if present
+    }
+
+    // ------------------- REVIEWS -------------------
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isSuperAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    // ------------------- BOOKS -------------------
+    match /books/{bookId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ------------------- CONNECTION TEST -------------------
     // Used for verifying Firestore connectivity during development
     match /test/connection {

@@ -2,6 +2,10 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import { initPushNotifications } from './lib/pushNotifications.ts';
+import { registerSW } from 'virtual:pwa-register';
+
+// Register PWA service worker
+registerSW({ immediate: true });
 
 // Initialize Capacitor Push Notifications
 initPushNotifications();

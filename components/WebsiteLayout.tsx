@@ -2,6 +2,7 @@
 import React, { useEffect } from 'react';
 import Navbar from './Navbar.tsx';
 import Footer from './Footer.tsx';
+import GlobalAnnounceBar from './GlobalAnnounceBar.tsx';
 
 interface WebsiteLayoutProps {
   children: React.ReactNode;
@@ -17,8 +18,9 @@ const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({ children, onNavigate, sto
 
   return (
     <div className="min-h-screen bg-white font-sans overflow-x-hidden selection:bg-amber-400 selection:text-indigo-950">
+      <GlobalAnnounceBar broadcasts={store.broadcasts || []} />
       <Navbar onNavigate={onNavigate} store={store} currentPage={currentPage} />
-      <main className="pt-20">
+      <main className="pt-16">
         {children}
       </main>
       <Footer onNavigate={onNavigate} store={store} />

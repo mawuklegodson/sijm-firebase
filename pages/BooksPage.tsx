@@ -9,6 +9,7 @@ import {
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import CheckoutModal from '../components/CheckoutModal.tsx';
 import ReviewSystem from '../components/ReviewSystem.tsx';
+import BookstoreEditor from '../components/BookstoreEditor.tsx';
 import { WorkerPermission, Review } from '../types.ts';
 
 /* ──────────── types ──────────── */
@@ -497,7 +498,7 @@ const BookDetail = ({ book, onClose, onRead, onPurchase, reviews = [] }: {
    MAIN BOOKS PAGE
    ════════════════════════════════════════════════════════════════ */
 const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ onNavigate, store }) => {
-  const [books, setBooks]               = useState<Book[]>(DEFAULT_BOOKS);
+  const books = store.books?.length ? store.books : DEFAULT_BOOKS;
   const [search, setSearch]             = useState('');
   const [category, setCategory]         = useState('All');
   const [filter, setFilter]             = useState('All Types');
@@ -527,19 +528,27 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
 
   const featured = books.filter(b => b.featured);
 
-  const handleSaveBook = (book: Book) => {
-    const exists = books.find(b => b.id === book.id);
-    if (exists) {
-      setBooks(books.map(b => b.id === book.id ? book : b));
-    } else {
-      setBooks([...books, book]);
+  const handleSaveBook = async (book: Book) => {
+    try {
+      const exists = books.find(b => b.id === book.id);
+      if (exists) {
+        await store.updateBook(book.id, book);
+      } else {
+        await store.addBook(book);
+      }
+      setEditingBook(undefined);
+    } catch (e) {
+      alert('Failed to save book');
     }
-    setEditingBook(undefined);
   };
 
-  const handleDeleteBook = (id: string) => {
+  const handleDeleteBook = async (id: string) => {
     if (confirm('Are you sure you want to delete this book?')) {
-      setBooks(books.filter(b => b.id !== id));
+      try {
+        await store.deleteBook(id);
+      } catch (e) {
+        alert('Failed to delete book');
+      }
     }
   };
 
@@ -598,6 +607,15 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
               <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none" style={{ fontFamily: "'Playfair Display', serif" }}>
                 Books &<br /><span className="text-amber-400 italic">Resources</span>
               </h1>
+              
+              {isAdmin && (
+                <button 
+                  onClick={() => setShowAdmin(!showAdmin)}
+                  className={`mt-4 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${showAdmin ? 'bg-amber-400 text-indigo-950 shadow-xl shadow-amber-400/20' : 'bg-white/10 text-white hover:bg-white/20 border border-white/10'}`}
+                >
+                  <Settings size={16} /> {showAdmin ? 'Hide Store Settings' : 'Manage Store (Global)'}
+                </button>
+              )}
               <p className="text-white/50 text-lg font-medium max-w-md leading-relaxed">
                 Prophetic literature, devotionals, and theological works authored from the heart of SIJM's ministry.
               </p>
@@ -629,9 +647,14 @@ const BooksPage: React.FC<{ onNavigate: (p: string) => void; store: any }> = ({ 
 
       {/* Admin Book List (Table view) */}
       {isAdmin && showAdmin && (
-        <section className="bg-indigo-900/50 py-8 px-6 border-b border-indigo-800">
-          <div className="max-w-7xl mx-auto">
-            <h3 className="text-[10px] font-black text-amber-400 uppercase tracking-[0.4em] mb-4">📚 Book Inventory ({books.length} books)</h3>
+        <section className="bg-indigo-900/50 py-12 px-6 border-b border-indigo-800 space-y-12">
+          <div className="max-w-7xl mx-auto space-y-12">
+            <div className="bg-white/5 p-8 rounded-[2rem] border border-white/10 shadow-2xl">
+              <BookstoreEditor store={store} />
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-[10px] font-black text-amber-400 uppercase tracking-[0.4em]">📚 Book Inventory ({books.length} books)</h3>
             <div className="space-y-2">
               {books.map(book => (
                 <div key={book.id} className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all">

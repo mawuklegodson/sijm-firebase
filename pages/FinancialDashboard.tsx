@@ -14,18 +14,21 @@ import AdminLayout from '../components/AdminLayout.tsx';
 
 interface FinancialDashboardProps {
   store: any;
+  currentUser: any;
+  onLogout: () => void;
+  navigate: (page: string) => void;
 }
 
-const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ store }) => {
+const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ store, currentUser, onLogout, navigate }) => {
   const { orders = [], donations = [], updateOrderStatus } = store;
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<Order['status'] | 'all'>('all');
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'donations'>('overview');
 
   // Stats Calculations
-  const totalGiving = useMemo(() => donations.reduce((sum, d) => sum + d.amount, 0), [donations]);
-  const totalSales = useMemo(() => orders.reduce((sum, o) => sum + o.total, 0), [orders]);
-  const pendingOrders = useMemo(() => orders.filter(o => o.status === 'pending'), [orders]);
+  const totalGiving = useMemo(() => (donations || []).reduce((sum, d) => sum + (d?.amount || 0), 0), [donations]);
+  const totalSales = useMemo(() => (orders || []).reduce((sum, o) => sum + (o?.total || 0), 0), [orders]);
+  const pendingOrders = useMemo(() => (orders || []).filter(o => o?.status === 'pending'), [orders]);
   
   // Charts Data (Mocking last 7 days for trend)
   const chartData = useMemo(() => {
@@ -63,7 +66,13 @@ const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ store }) => {
 
   return (
     <div className="min-h-screen bg-slate-50/50">
-      <AdminLayout store={store}>
+      <AdminLayout 
+        store={store} 
+        currentUser={currentUser} 
+        onLogout={onLogout} 
+        currentPage="financials" 
+        setCurrentPage={navigate}
+      >
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
