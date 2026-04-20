@@ -1,6 +1,6 @@
 # Firebase Setup Guide
 
-Follow these steps to set up your Firebase project for the SIJM Ministry Portal.l
+Follow these steps to set up your Firebase project for the SIJM Ministry Portal.
 
 ## 1. Create a Firebase Project
 1. Go to the [Firebase Console](https://console.firebase.google.com/).
