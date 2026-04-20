@@ -6,12 +6,13 @@
       "type": "object",
       "properties": {
         "username": { "type": "string" },
-        "full_name": { "type": "string" },
+        "fullName": { "type": "string" },
         "identityRole": { "type": "string" },
         "workerPermissions": { "type": "array", "items": { "type": "string" } },
         "email": { "type": "string" },
         "phone": { "type": "string" },
         "branch": { "type": "string" },
+        "dominion": { "type": "string" },
         "location": { "type": "string" },
         "birthday": { "type": "string" },
         "gender": { "type": "string" },
@@ -19,9 +20,10 @@
         "sermonAccessSuspended": { "type": "boolean" },
         "profileUpdateRequested": { "type": "boolean" },
         "isOnline": { "type": "boolean" },
-        "lastSeen": { "type": "string" }
+        "lastSeen": { "type": "string" },
+        "createdAt": { "type": "string" }
       },
-      "required": ["username", "full_name", "identityRole", "email"]
+      "required": ["username", "fullName", "identityRole", "email"]
     },
     "Member": {
       "title": "Member",
@@ -35,9 +37,11 @@
         "email": { "type": "string" },
         "location": { "type": "string" },
         "branch": { "type": "string" },
+        "dominion": { "type": "string" },
         "category": { "type": "string" },
         "membershipDate": { "type": "string" },
         "followUpNeeded": { "type": "boolean" },
+        "notes": { "type": "string" },
         "createdAt": { "type": "string" }
       },
       "required": ["fullName", "gender", "location", "category", "membershipDate"]
@@ -67,9 +71,13 @@
       "properties": {
         "fullName": { "type": "string" },
         "phone": { "type": "string" },
+        "email": { "type": "string" },
         "gender": { "type": "string" },
+        "ageGroup": { "type": "string" },
+        "source": { "type": "string" },
         "visitDate": { "type": "string" },
-        "followUpStatus": { "type": "string" }
+        "followUpStatus": { "type": "string" },
+        "notes": { "type": "string" }
       },
       "required": ["fullName", "phone", "gender", "visitDate", "followUpStatus"]
     },
@@ -81,11 +89,16 @@
         "title": { "type": "string" },
         "description": { "type": "string" },
         "category": { "type": "string" },
-        "file_url": { "type": "string" },
-        "access_level": { "type": "string" },
-        "created_at": { "type": "string" }
+        "fileUrl": { "type": "string" },
+        "thumbnailUrl": { "type": "string" },
+        "date": { "type": "string" },
+        "author": { "type": "string" },
+        "accessLevel": { "type": "string" },
+        "downloadCount": { "type": "integer" },
+        "isFeatured": { "type": "boolean" },
+        "createdAt": { "type": "string" }
       },
-      "required": ["title", "category", "file_url", "access_level"]
+      "required": ["title", "category", "fileUrl", "accessLevel"]
     },
     "PrayerRequest": {
       "title": "PrayerRequest",
@@ -94,32 +107,31 @@
       "properties": {
         "userId": { "type": "string" },
         "userName": { "type": "string" },
-        "userEmail": { "type": "string" },
-        "userPhone": { "type": "string" },
-        "request": { "type": "string" },
+        "subject": { "type": "string" },
+        "content": { "type": "string" },
         "isPrivate": { "type": "boolean" },
         "status": { "type": "string", "enum": ["Pending", "Prayed", "Answered"] },
         "createdAt": { "type": "string" },
         "category": { "type": "string" },
         "anonymous": { "type": "boolean" },
-        "notes": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "string" },
-              "text": { "type": "string" },
-              "authorId": { "type": "string" },
-              "authorName": { "type": "string" },
-              "isPrivate": { "type": "boolean" },
-              "createdAt": { "type": "string" }
-            }
-          }
-        },
+        "notes": { "type": "array", "items": { "$ref": "#/entities/PrayerNote" } },
         "visibleToIds": { "type": "array", "items": { "type": "string" } },
         "branch": { "type": "string" }
       },
-      "required": ["userId", "userName", "request", "isPrivate", "status", "createdAt"]
+      "required": ["userId", "userName", "subject", "content", "isPrivate", "status", "createdAt"]
+    },
+    "PrayerNote": {
+      "title": "PrayerNote",
+      "description": "Notes added to prayer requests",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "authorId": { "type": "string" },
+        "authorName": { "type": "string" },
+        "isPrivate": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      }
     },
     "Event": {
       "title": "Event",
@@ -139,130 +151,124 @@
       },
       "required": ["title", "date", "time", "location", "category", "createdAt"]
     },
-    "Chat": {
-      "title": "Chat",
-      "description": "Chat conversation between users",
+    "Broadcast": {
+      "title": "Broadcast",
+      "description": "Site-wide marquee announcements",
       "type": "object",
       "properties": {
-        "participants": { "type": "array", "items": { "type": "string" } },
-        "lastMessage": { "type": "string" },
-        "lastMessageAt": { "type": "string" },
-        "lastSenderId": { "type": "string" },
-        "unreadCount": { "type": "object" }
-      },
-      "required": ["participants", "lastMessageAt"]
-    },
-    "Message": {
-      "title": "Message",
-      "description": "Single chat message",
-      "type": "object",
-      "properties": {
-        "chatId": { "type": "string" },
-        "senderId": { "type": "string" },
-        "receiverId": { "type": "string" },
-        "text": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "isRead": { "type": "boolean" },
-        "encrypted": { "type": "boolean" }
-      },
-      "required": ["chatId", "senderId", "receiverId", "text", "createdAt"]
-    },
-    "SermonQuestion": {
-      "title": "Sermon Question",
-      "description": "A question asked by a user about a specific sermon.",
-      "type": "object",
-      "properties": {
-        "sermonId": { "type": "string" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "userPhoto": { "type": "string" },
-        "content": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "answerCount": { "type": "number" }
-      },
-      "required": ["sermonId", "userId", "content", "createdAt"]
-    },
-    "SermonAnswer": {
-      "title": "Sermon Answer",
-      "description": "An answer or comment provided for a sermon question.",
-      "type": "object",
-      "properties": {
-        "questionId": { "type": "string" },
-        "sermonId": { "type": "string" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "userPhoto": { "type": "string" },
-        "content": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "likes": { "type": "array", "items": { "type": "string" } }
-      },
-      "required": ["questionId", "sermonId", "userId", "content", "createdAt"]
-    },
-    "Notification": {
-      "title": "Notification",
-      "description": "User notifications",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "title": { "type": "string" },
         "message": { "type": "string" },
-        "type": { "type": "string", "enum": ["question", "answer", "like", "system"] },
-        "link": { "type": "string" },
-        "isRead": { "type": "boolean" },
-        "createdAt": { "type": "string" },
-        "metadata": { "type": "object" }
+        "type": { "type": "string", "enum": ["info", "urgent", "promo"] },
+        "active": { "type": "boolean" },
+        "isClosable": { "type": "boolean" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "pushEnabled": { "type": "boolean" },
+        "createdAt": { "type": "string" }
       },
-      "required": ["userId", "title", "message", "type", "isRead", "createdAt"]
+      "required": ["message", "type", "active", "createdAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Ministry announcements and requests",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "urgency": { "type": "string" },
+        "status": { "type": "string" },
+        "submittedBy": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "Book": {
+      "title": "Book",
+      "description": "Bookstore inventory item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "author": { "type": "string" },
+        "cover": { "type": "string" },
+        "category": { "type": "string" },
+        "type": { "type": "string", "enum": ["ebook-free", "ebook-paid", "physical", "both"] },
+        "price": { "type": "number" },
+        "pages": { "type": "integer" },
+        "description": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "isComingSoon": { "type": "boolean" },
+        "comingSoonDate": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "new": { "type": "boolean" },
+        "soldOut": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["title", "author", "type", "category"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Bookstore purchase record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "items": { "type": "array" },
+        "total": { "type": "number" },
+        "currency": { "type": "string" },
+        "paymentGateway": { "type": "string" },
+        "status": { "type": "string" },
+        "shippingAddress": { "type": "object" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "Donation": {
+      "title": "Donation",
+      "description": "Financial giving record",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "userName": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "category": { "type": "string" },
+        "paymentGateway": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Book rating and feedback",
+      "type": "object",
+      "properties": {
+        "bookId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "rating": { "type": "integer" },
+        "comment": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
     }
   },
   "firestore": {
-    "profiles/{userId}": {
-      "schema": "Profile",
-      "description": "User profiles"
-    },
-    "members/{memberId}": {
-      "schema": "Member",
-      "description": "Church members"
-    },
-    "attendance/{recordId}": {
-      "schema": "Attendance",
-      "description": "Attendance records"
-    },
-    "first_timers/{visitorId}": {
-      "schema": "FirstTimer",
-      "description": "First time visitors"
-    },
-    "resources/{resourceId}": {
-      "schema": "Resource",
-      "description": "Church resources"
-    },
-    "prayer_requests/{requestId}": {
-      "schema": "PrayerRequest",
-      "description": "User prayer requests"
-    },
-    "events/{eventId}": {
-      "schema": "Event",
-      "description": "Church events"
-    },
-    "chats/{chatId}": {
-      "schema": "Chat",
-      "description": "Chat conversations"
-    },
-    "chats/{chatId}/messages/{messageId}": {
-      "schema": "Message",
-      "description": "Messages within a chat"
-    },
-    "sermon_questions/{questionId}": {
-      "schema": "SermonQuestion",
-      "description": "Questions asked about sermons"
-    },
-    "sermon_questions/{questionId}/answers/{answerId}": {
-      "schema": "SermonAnswer",
-      "description": "Answers to sermon questions"
-    },
-    "notifications/{notificationId}": {
-      "schema": "Notification",
-      "description": "User notifications"
-    }
+    "profiles/{userId}": { "schema": "Profile" },
+    "members/{memberId}": { "schema": "Member" },
+    "attendance/{recordId}": { "schema": "Attendance" },
+    "first_timers/{visitorId}": { "schema": "FirstTimer" },
+    "resources/{resourceId}": { "schema": "Resource" },
+    "prayer_requests/{requestId}": { "schema": "PrayerRequest" },
+    "events/{eventId}": { "schema": "Event" },
+    "broadcasts/{broadcastId}": { "schema": "Broadcast" },
+    "announcements/{id}": { "schema": "Announcement" },
+    "books/{bookId}": { "schema": "Book" },
+    "orders/{orderId}": { "schema": "Order" },
+    "donations/{id}": { "schema": "Donation" },
+    "reviews/{id}": { "schema": "Review" },
+    "settings/bookstore": { "description": "Bookstore global configuration" },
+    "settings/payment": { "description": "Payment gateway global configuration" },
+    "settings/global": { "description": "General ministry branding and terminology" },
+    "landingPageConfigs/main": { "description": "Website hero and sections configuration" }
   }
 }

@@ -10,30 +10,7 @@ import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import CheckoutModal from '../components/CheckoutModal.tsx';
 import ReviewSystem from '../components/ReviewSystem.tsx';
 import BookstoreEditor from '../components/BookstoreEditor.tsx';
-import { WorkerPermission, Review } from '../types.ts';
-
-/* ──────────── types ──────────── */
-interface Book {
-  id: string;
-  title: string;
-  author: string;
-  cover: string;
-  category: string;
-  type: 'ebook-free' | 'ebook-paid' | 'physical' | 'both';
-  price?: number;
-  pages: number;
-  rating: number;
-  reviews: number;
-  description: string;
-  excerpt?: string;
-  fileUrl?: string;
-  tags: string[];
-  featured?: boolean;
-  new?: boolean;
-  soldOut?: boolean;
-  isComingSoon?: boolean;
-  comingSoonDate?: string;
-}
+import { WorkerPermission, Review, Book } from '../types.ts';
 
 /* ──────────── default books ──────────── */
 const DEFAULT_BOOKS: Book[] = [

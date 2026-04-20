@@ -10,7 +10,7 @@ SIJM is deployed as both a **PWA** (installable from browser) and a **native mob
 ```bash
 npm install @capacitor/core @capacitor/cli
 npm install @capacitor/android @capacitor/ios
-npm install @capacitor/push-notifications @capacitor/haptics @capacitor/status-bar @capacitor/splash-screen @capacitor/app
+npm install @capacitor/push-notifications @capacitor/haptics @capacitor/status-bar @capacitor/splash-screen @capacitor/app @capacitor/share @capacitor/filesystem
 npx cap init
 ```
 
@@ -155,13 +155,16 @@ export const initPushNotifications = async () => {
 
 ---
 
-## 7. PWA Enhancements (already configured)
+## 7. PWA Enhancements (Configured via vite-plugin-pwa)
 
-The existing `manifest.json` and `sw.js` provide:
-- ✅ Installable from browser (Add to Home Screen)
-- ✅ Offline caching of core assets
-- ✅ Theme color and splash screen
-- ✅ Standalone display mode
+The PWA is now managed through `vite.config.ts`, which automatically handles:
+- ✅ **Installability**: Browser prompts for "Add to Home Screen".
+- ✅ **Asset Caching**: Core JS, CSS, and HTML are cached for offline use.
+- ✅ **Image Caching**: External images from Unsplash are cached via Workbox.
+- ✅ **Theme & Branding**: Icons and splash screen colors are synchronized with the SIJM brand.
+
+### Global Marquee Alerts
+Broadcasts managed in the **Announcements Hub** appear as a scrolling marquee in the PWA. These are closable by the user and can be scheduled to expire automatically, making them ideal for mobile-first ministry updates.
 
 ### Upgrade `sw.js` for background sync:
 ```javascript

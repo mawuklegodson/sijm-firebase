@@ -54,7 +54,24 @@ Once you are a Super Admin, you can manage other users directly within the app:
 
 ---
 
-## 4. Troubleshooting Common Errors
+## 4. Bookstore & Financial Management
+
+Once promoted to **Super Admin**, you gain access to the following specialized modules:
+
+### Bookstore Strategy
+1.  Navigate to the **Books Manager**.
+2.  Click **Manage Bookstore Settings** to toggle the "Coming Soon" state or manage global book categories.
+3.  Add new books; if marked "Coming Soon," the system will automatically hide prices and display a countdown timer.
+
+### Financial Oversight
+1.  Access the **Financial Hub** from the administrative sidebar.
+2.  **Orders**: Categorize and track the shipping status of bookstore purchases.
+3.  **Donations**: Review real-time records of Tithes, Mission Seeds, and other gifts.
+4.  Use the built-in analytics to monitor ministry growth and revenue targets.
+
+---
+
+## 5. Troubleshooting Common Errors
 
 ### Error: `auth/unauthorized-domain`
 This happens when Google Sign-In is attempted from a domain that isn't white-listed in Firebase.

@@ -323,6 +323,29 @@ export interface LandingPageSection {
   active: boolean;
 }
 
+export interface Book {
+  id: string;
+  title: string;
+  author: string;
+  cover: string;
+  category: string;
+  type: 'ebook-free' | 'ebook-paid' | 'physical' | 'both';
+  price?: number;
+  pages: number;
+  rating: number;
+  reviews: number;
+  description: string;
+  excerpt?: string;
+  fileUrl?: string;
+  tags: string[];
+  featured?: boolean;
+  new?: boolean;
+  soldOut?: boolean;
+  isComingSoon?: boolean;
+  comingSoonDate?: string;
+  createdAt?: string;
+}
+
 export interface BookstoreConfig {
   id: string;
   isComingSoon: boolean;
