@@ -1,9 +1,9 @@
 {
-  "name": "gracecenter-cms",
+  "name": "sijm-firebase",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Church Management System - Production Build",
+  "description": "Salvation In Jesus Ministry (SIJM) - Church Management System",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
