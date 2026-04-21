@@ -1,23 +1,46 @@
 {
   "name": "Salvation In Jesus Ministry",
   "short_name": "SIJM",
-  "description": "Ministry Management System for Salvation In Jesus Ministry",
+  "description": "Salvation In Jesus Ministry — Official Church App. Look Unto Jesus: The Only Name That Saves.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "orientation": "any",
+  "background_color": "#f9fafb",
   "theme_color": "#002366",
+  "categories": ["lifestyle", "social"],
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/assets/logo.png",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
-      "src": "/logo.png",
+      "src": "/assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/assets/logo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Open the admin panel",
+      "url": "/?page=dashboard",
+      "icons": [{ "src": "/assets/logo.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Live Service",
+      "short_name": "Live",
+      "description": "Watch the live service stream",
+      "url": "/?page=live",
+      "icons": [{ "src": "/assets/logo.png", "sizes": "192x192" }]
     }
   ]
 }

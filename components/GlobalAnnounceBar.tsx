@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Megaphone, Bell, Info } from 'lucide-react';
-import { Broadcast } from '../types.ts';
+import { Broadcast } from '../types';
 
 interface GlobalAnnounceBarProps {
   broadcasts: Broadcast[];

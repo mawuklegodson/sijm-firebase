@@ -1,84 +1,59 @@
-const CACHE_NAME = 'grace-center-cache-v2';
+// public/sw.js
+// This is the FALLBACK service worker used by browsers that load manifest.json
+// directly (e.g. some older Samsung Internet versions).
+// vite-plugin-pwa generates a Workbox-powered SW at build time which supersedes
+// this file in production — but we keep this for completeness.
+
+const CACHE_NAME = 'sijm-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/manifest.json',
-  '/logo.png',
-  'https://cdn.tailwindcss.com',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap'
+  '/manifest.webmanifest',
+  '/assets/logo.png',
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
   );
 });
 
 self.addEventListener('activate', (event) => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys().then((names) =>
+      Promise.all(
+        names
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => caches.delete(name))
+      )
+    )
   );
+  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
-  // Network First strategy for the root and index.html
-  if (event.request.mode === 'navigate' || event.request.url.endsWith('index.html') || event.request.url.endsWith('/')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-          return response;
-        })
-        .catch(() => {
-          return caches.match(event.request);
-        })
-    );
-    return;
-  }
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+  // Don't intercept Firebase or Paystack API calls
+  const url = new URL(event.request.url);
+  if (
+    url.hostname.includes('firebaseapp.com') ||
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('paystack.co')
+  ) return;
 
-  // Cache First for other assets
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (!response || response.status !== 200 || response.type === 'opaque') {
           return response;
         }
-        return fetch(event.request);
-      })
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        return response;
+      });
+    })
   );
 });
-
-// Background Sync for offline attendance submissions
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'sync-attendance') {
-    event.waitUntil(syncPendingAttendance());
-  }
-});
-
-async function syncPendingAttendance() {
-  const pending = JSON.parse(localStorage.getItem('pending_sync') || '[]');
-  for (const record of pending) {
-    try {
-      await fetch('/api/attendance', { method: 'POST', body: JSON.stringify(record) });
-    } catch (e) {
-      throw e; // Will retry
-    }
-  }
-  localStorage.removeItem('pending_sync');
-}

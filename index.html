@@ -1,82 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salvation In Jesus Ministry</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#002366">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="SIJM">
-    <link rel="apple-touch-icon" href="/assets/logo.png">
-    <meta name="description" content="Look Unto Jesus: The Only Name That Saves.">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    <script src="https://js.paystack.co/v1/inline.js"></script>
-    <script>
-        // Production Shim
-        window.process = { env: { NODE_ENV: 'production' } };
-        
-    <!-- PWA configuration will be injected here by vite-plugin-pwa -->
-        
-        tailwind.config = {
-          theme: {
-            extend: {
-              fontFamily: {
-                sans: ['Inter', 'sans-serif'],
-                poppins: ['Poppins', 'sans-serif'],
-                playfair: ['Playfair Display', 'serif'],
-              },
-            }
-          }
-        }
-    </script>
-    <style>
-        body { background-color: #f9fafb; margin: 0; padding: 0; }
-        #root { min-height: 100vh; display: flex; flex-direction: column; }
-        
-        /* Custom Scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(0, 0, 0, 0.2);
-        }
-    </style>
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.460.0",
-    "recharts": "https://esm.sh/recharts@2.13.3",
-    "@google/genai": "https://esm.sh/@google/genai@1.34.0",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "vite": "https://esm.sh/vite@^7.3.1",
-    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2"
-  }
-}
-</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Salvation In Jesus Ministry</title>
+
+  <!-- ── Primary Meta ───────────────────────────────────────────────── -->
+  <meta name="description" content="Look Unto Jesus: The Only Name That Saves." />
+  <meta name="theme-color" content="#002366" />
+
+  <!-- ── PWA / Manifest ────────────────────────────────────────────── -->
+  <link rel="manifest" href="/manifest.webmanifest" />
+
+  <!-- ── iOS PWA Support ───────────────────────────────────────────── -->
+  <!-- Enables full-screen mode when added to home screen on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SIJM" />
+  <!-- iOS home-screen icon (use the largest size available) -->
+  <link rel="apple-touch-icon" sizes="192x192" href="/assets/logo.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="/assets/logo.png" />
+
+  <!-- ── Favicon ────────────────────────────────────────────────────── -->
+  <link rel="icon" type="image/png" href="/assets/logo.png" />
+
+  <!-- ── Open Graph / Social ───────────────────────────────────────── -->
+  <meta property="og:title" content="Salvation In Jesus Ministry" />
+  <meta property="og:description" content="Look Unto Jesus: The Only Name That Saves." />
+  <meta property="og:image" content="/assets/logo.png" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary" />
+
+  <!-- ── Fonts ─────────────────────────────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- ── Tailwind CDN (dev/sandbox only — production uses bundled CSS) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            poppins: ['Poppins', 'sans-serif'],
+            playfair: ['Playfair Display', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- ── Paystack inline SDK ───────────────────────────────────────── -->
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+
+  <!-- ── Production shim ───────────────────────────────────────────── -->
+  <script>
+    window.process = { env: { NODE_ENV: 'production' } };
+  </script>
+
+  <style>
+    /* ── Base ──────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      /* Support iOS notch / safe areas */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+      background-color: #f9fafb;
+      /* Prevent rubber-band scroll on iOS PWA */
+      overscroll-behavior: none;
+    }
+    #root {
+      min-height: 100dvh; /* dvh = dynamic viewport height — correct on mobile */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Loading spinner ────────────────────────────────────────────── */
+    #app-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100dvh;
+      font-family: Inter, sans-serif;
+      color: #64748b;
+      gap: 16px;
+    }
+    #app-loader .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid #e2e8f0;
+      border-top-color: #002366;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Custom scrollbar ───────────────────────────────────────────── */
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,.10);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,.20); }
+
+    /* ── PWA install banner ─────────────────────────────────────────── */
+    #pwa-install-banner {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #002366;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,35,102,.35);
+      font-family: Inter, sans-serif;
+      font-size: 14px;
+      z-index: 9999;
+      align-items: center;
+      gap: 12px;
+      max-width: calc(100vw - 40px);
+      width: max-content;
+    }
+    #pwa-install-banner.visible { display: flex; }
+    #pwa-install-banner button {
+      background: #fff;
+      color: #002366;
+      border: none;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    #pwa-install-banner .dismiss {
+      background: transparent;
+      color: rgba(255,255,255,.7);
+      padding: 4px 6px;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* ── iOS install toast ──────────────────────────────────────────── */
+    #ios-install-toast {
+      display: none;
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-family: Inter, sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      z-index: 9999;
+      text-align: center;
+      max-width: calc(100vw - 32px);
+    }
+    #ios-install-toast.visible { display: block; }
+  </style>
 </head>
 <body>
-    <div id="root">
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; color: #666;">
-            <div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #002366; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
-            <style>@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-            Initializing Ministry Portal...
-        </div>
+  <div id="root">
+    <div id="app-loader">
+      <div class="spinner"></div>
+      <span>Initializing Ministry Portal…</span>
     </div>
-    <script type="module" src="/index.tsx"></script>
+  </div>
+
+  <!-- ── PWA install banner (Chrome / Edge / Samsung on Android + Desktop) ── -->
+  <div id="pwa-install-banner" role="banner" aria-label="Install app">
+    <span>📲 Install SIJM App for a better experience</span>
+    <button id="pwa-install-btn">Install</button>
+    <button class="dismiss" id="pwa-dismiss-btn" aria-label="Dismiss">✕</button>
+  </div>
+
+  <!-- ── iOS Safari install tip ─────────────────────────────────────────── -->
+  <div id="ios-install-toast">
+    To install: tap <strong>Share</strong> (⬆) then <strong>"Add to Home Screen"</strong>
+    <br />
+    <button onclick="document.getElementById('ios-install-toast').classList.remove('visible')"
+      style="margin-top:8px;background:#334155;color:#fff;border:none;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;">
+      Got it
+    </button>
+  </div>
+
+  <script>
+    // ── PWA install prompt (Chrome / Edge / Samsung Internet / Desktop) ──────
+    let deferredPrompt = null;
+    const banner  = document.getElementById('pwa-install-banner');
+    const installBtn = document.getElementById('pwa-install-btn');
+    const dismissBtn = document.getElementById('pwa-dismiss-btn');
+
+    // Don't show if already installed (standalone mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || window.navigator.standalone === true;
+
+    if (!isStandalone) {
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        banner.classList.add('visible');
+      });
+
+      installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        banner.classList.remove('visible');
+      });
+
+      dismissBtn.addEventListener('click', () => {
+        banner.classList.remove('visible');
+        // Remember dismissal for 7 days
+        localStorage.setItem('pwa-banner-dismissed', Date.now().toString());
+      });
+
+      // Check if dismissed recently
+      const dismissed = localStorage.getItem('pwa-banner-dismissed');
+      if (dismissed && Date.now() - Number(dismissed) < 7 * 24 * 60 * 60 * 1000) {
+        banner.classList.remove('visible');
+      }
+
+      // ── iOS Safari tip ─────────────────────────────────────────────────────
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      if (isIOS && isSafari && !isStandalone) {
+        setTimeout(() => {
+          const iosToast = document.getElementById('ios-install-toast');
+          iosToast.classList.add('visible');
+          setTimeout(() => iosToast.classList.remove('visible'), 8000);
+        }, 4000);
+      }
+    }
+  </script>
+
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ import Stripe from 'stripe';
 const stripeSecret = process.env.STRIPE_SECRET_KEY || 'sk_test_51RrpSVKs46DvZjOHPmV7MoRobx5yBVJ6WgTMero4cMOBvrQigz4O7ezBuKXR8r8EYi60Snv5uratFR0LqQp8LSP000EBOGu9v3';
 
 const stripe = new Stripe(stripeSecret, {
-  apiVersion: '2025-01-27.acacia', // Latest API version
+  apiVersion: '2026-03-25.dahlia', // Latest API version matching types
 });
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
