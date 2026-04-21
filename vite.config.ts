@@ -10,7 +10,7 @@ export default defineConfig({
       // Dev mode: enable SW during local development for testing
       devOptions: { enabled: false },
       // Assets to pre-cache (beyond the build output)
-      includeAssets: ['assets/logo.png', 'favicon.ico'],
+      includeAssets: ['favicon.ico'],
       manifest: {
         name: 'Salvation In Jesus Ministry',
         short_name: 'SIJM',
@@ -68,8 +68,10 @@ export default defineConfig({
         ],
       },
       workbox: {
-        // Pre-cache all compiled assets
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        // Raise the default 2 MiB limit so the main bundle + logo don't block the build
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
+        // Pre-cache compiled assets (exclude the oversized logo — it loads fine from CDN)
+        globPatterns: ['**/*.{js,css,html,ico,svg,woff,woff2}'],
         // Don't let Workbox try to cache the Paystack inline script (cross-origin)
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api\//],
