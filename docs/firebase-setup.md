@@ -4,7 +4,7 @@ Follow these steps to set up your Firebase project for the SIJM Ministry Portal.
 
 ## 1. Create a Firebase Project
 1. Go to the [Firebase Console](https://console.firebase.google.com/).
-2. Click **Add project** and follow the prompts to create a new project.
+2. Click **Add project** and follow the prompts to create a new project.k
 
 ## 2. Enable Authentication
 1. In the Firebase console, go to **Build > Authentication**.
