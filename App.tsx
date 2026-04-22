@@ -41,6 +41,7 @@ import BooksPage from './pages/BooksPage.tsx';
 import { WifiOff, Loader2 } from 'lucide-react';
 import { isMockMode, firebaseConfig } from './lib/firebase.ts';
 import GlobalAnnounceBar from './components/GlobalAnnounceBar.tsx';
+import PullToRefresh from './components/PullToRefresh.tsx';
 
 
 const App: React.FC = () => {
@@ -277,71 +278,79 @@ const App: React.FC = () => {
 
   const Layout = getLayout();
 
+  const handleRefresh = async () => {
+    if (store.refresh) {
+      await store.refresh();
+    }
+  };
+
   return (
-    <Layout 
-      currentUser={store.currentUser!} 
-      onLogout={store.logout} 
-      currentPage={currentPage}
-      setCurrentPage={setCurrentPage}
-      store={store}
-      showInstallButton={showInstallButton}
-      onInstall={handleInstallClick}
-    >
-      <style>{`
-        :root {
-          --radius-card: var(--radius-main);
-          --radius-button: calc(var(--radius-main) * 0.7);
-        }
-        body { 
-          background-color: var(--page-bg); 
-          transition: background-color 0.3s ease; 
-          font-family: var(--font-main);
-        }
-        .bg-primary { background-color: var(--color-primary); }
-        .text-primary { color: var(--color-primary); }
-        .border-primary { border-color: var(--color-primary); }
-        .bg-secondary { background-color: var(--color-secondary); }
-        .text-secondary { color: var(--color-secondary); }
-        .bg-sidebar { background-color: var(--sidebar-bg); }
-        .text-sidebar { color: var(--sidebar-text); }
-        .bg-header { background-color: var(--header-bg); }
-        .text-header { color: var(--header-text); }
-        .bg-success { background-color: var(--color-success); }
-        .bg-warning { background-color: var(--color-warning); }
-        .bg-danger { background-color: var(--color-danger); }
-        .bg-card { background-color: var(--card-bg); }
-        
-        .rounded-enhanced { border-radius: var(--radius-card); }
-        .rounded-button-enhanced { border-radius: var(--radius-button); }
-        
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-        
-        .glass-card {
-          background: rgba(255, 255, 255, var(--glass-opacity));
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-      `}</style>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <Layout 
+        currentUser={store.currentUser!} 
+        onLogout={store.logout} 
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        store={store}
+        showInstallButton={showInstallButton}
+        onInstall={handleInstallClick}
+      >
+        <style>{`
+          :root {
+            --radius-card: var(--radius-main);
+            --radius-button: calc(var(--radius-main) * 0.7);
+          }
+          body { 
+            background-color: var(--page-bg); 
+            transition: background-color 0.3s ease; 
+            font-family: var(--font-main);
+          }
+          .bg-primary { background-color: var(--color-primary); }
+          .text-primary { color: var(--color-primary); }
+          .border-primary { border-color: var(--color-primary); }
+          .bg-secondary { background-color: var(--color-secondary); }
+          .text-secondary { color: var(--color-secondary); }
+          .bg-sidebar { background-color: var(--sidebar-bg); }
+          .text-sidebar { color: var(--sidebar-text); }
+          .bg-header { background-color: var(--header-bg); }
+          .text-header { color: var(--header-text); }
+          .bg-success { background-color: var(--color-success); }
+          .bg-warning { background-color: var(--color-warning); }
+          .bg-danger { background-color: var(--color-danger); }
+          .bg-card { background-color: var(--card-bg); }
+          
+          .rounded-enhanced { border-radius: var(--radius-card); }
+          .rounded-button-enhanced { border-radius: var(--radius-button); }
+          
+          .no-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          
+          .glass-card {
+            background: rgba(255, 255, 255, var(--glass-opacity));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+          }
+        `}</style>
 
-      {!store.isOnline && (
-        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-rose-600 text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
-          <WifiOff size={18} />
-          <span className="text-sm font-bold">Offline Mode: Data will be saved locally</span>
-        </div>
-      )}
-      
-      <GlobalAnnounceBar broadcasts={store.broadcasts} />
+        {!store.isOnline && (
+          <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[60] bg-rose-600 text-white px-6 py-2 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
+            <WifiOff size={18} />
+            <span className="text-sm font-bold">Offline Mode: Data will be saved locally</span>
+          </div>
+        )}
+        
+        <GlobalAnnounceBar broadcasts={store.broadcasts} />
 
-      {renderContent()}
+        {renderContent()}
 
-    </Layout>
+      </Layout>
+    </PullToRefresh>
   );
 };
 

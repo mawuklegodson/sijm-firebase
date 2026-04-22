@@ -85,32 +85,20 @@ const AdminLayout: React.FC<Props> = ({ children, currentUser, onLogout, current
       >
         <div className="p-6">
           <div className="flex items-center gap-3">
-             {branding?.logoUrl ? (
-               <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-white/20 overflow-hidden">
-                 <img 
-                   src={formatImageUrl(branding.logoUrl)} 
-                   alt="Church Logo" 
-                   className="w-10 h-10 object-contain" 
-                   referrerPolicy="no-referrer"
-                   onError={(e) => {
-                     const target = e.target as HTMLImageElement;
-                     if (target.src !== logoImg) {
-                       target.src = logoImg;
-                     }
-                   }}
-                 />
-               </div>
-             ) : (
-               <div 
-                  style={{ 
-                    background: `radial-gradient(circle at 30% 30%, ${branding?.secondaryColor || '#D4AF37'}, #B8860B)`,
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.2), inset 0 0 10px rgba(255,255,255,0.2)'
-                  }}
-                  className="w-11 h-11 rounded-[0.85rem] flex items-center justify-center text-white text-xl font-black shrink-0 border border-white/20"
-                >
-                  {general?.churchName?.charAt(0) || 'S'}
-                </div>
-             )}
+             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-white/20 overflow-hidden">
+               <img 
+                 src={branding?.logoUrl ? formatImageUrl(branding.logoUrl) : logoImg} 
+                 alt="Church Logo" 
+                 className="w-10 h-10 object-contain" 
+                 referrerPolicy="no-referrer"
+                 onError={(e) => {
+                   const target = e.target as HTMLImageElement;
+                   if (target.src !== logoImg) {
+                     target.src = logoImg;
+                   }
+                 }}
+               />
+             </div>
              <div className="min-w-0">
                <span className="truncate leading-tight text-base font-bold font-poppins block">{general?.churchName || 'Salvation In Jesus Ministry'}</span>
                <p style={{ opacity: 0.6 }} className="text-[8px] uppercase tracking-[0.2em] font-black truncate">{general?.tagline || 'Look Unto Jesus: The Only Name That Saves.'}</p>

@@ -2144,6 +2144,10 @@ export function useCMSStore() {
           file_size: res.fileSize,
           access_level: res.accessLevel || SermonAccessLevel.PUBLIC,
           accessLevel: res.accessLevel || SermonAccessLevel.PUBLIC,
+          is_featured: !!res.isFeatured,
+          isFeatured: !!res.isFeatured,
+          notify_users: !!res.notifyUsers,
+          notifyUsers: !!res.notifyUsers,
           download_count: 0,
           created_at: new Date().toISOString()
         });
@@ -2164,7 +2168,11 @@ export function useCMSStore() {
         author: res.author,
         file_size: res.fileSize,
         access_level: res.accessLevel,
-        accessLevel: res.accessLevel
+        accessLevel: res.accessLevel,
+        is_featured: !!res.isFeatured,
+        isFeatured: !!res.isFeatured,
+        notify_users: !!res.notifyUsers,
+        notifyUsers: !!res.notifyUsers
       });
     },
     deleteResource: async (id: string) => {

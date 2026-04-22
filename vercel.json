@@ -3,6 +3,7 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/api/paystack-checkout", "destination": "/api/paystack-checkout.ts" },
+    { "source": "/api/paystack-webhook",  "destination": "/api/paystack-webhook.ts"  },
     { "source": "/api/stripe-checkout",   "destination": "/api/stripe-checkout.ts"   },
     { "source": "/((?!api|assets|_next|favicon\\.ico|manifest\\.webmanifest|sw\\.js|\\.well-known).*)", "destination": "/index.html" }
   ],

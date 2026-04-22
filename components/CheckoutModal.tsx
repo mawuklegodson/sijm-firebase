@@ -29,8 +29,13 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ book, userEmail, onClose,
 
   const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_06876a2cd7004fc4caa34867fb904ffd87cbcc13';
 
-  const saveOrderData = async () => {
+  const handlePaystack = async () => {
+    setIsProcessing(true);
+    const tempOrderId = `ORD_${Math.floor(Math.random() * 1000000000 + 1)}`;
+    
+    // Save order as pending BEFORE opening payment
     const order: Partial<Order> = {
+      id: tempOrderId.replace('ORD_', ''),
       items: [{ id: book.id, title: book.title, price: book.price || 0, quantity: 1 }],
       total: book.price || 0,
       customerName: shipping.fullName || store.currentUser?.fullName || 'Anonymous',
@@ -40,25 +45,21 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ book, userEmail, onClose,
       status: 'pending'
     };
     await store.addOrder(order);
-  };
 
-  const handlePaystack = () => {
-    setIsProcessing(true);
     const handler = PaystackPop.setup({
       key: PAYSTACK_PUBLIC_KEY,
       email: userEmail,
       amount: Math.round((book.price || 0) * 100), // Pesewas
       currency: 'GHS',
-      ref: `SIJM_${Math.floor(Math.random() * 1000000000 + 1)}`,
+      ref: tempOrderId,
+      metadata: {
+        type: 'order',
+        orderId: tempOrderId.replace('ORD_', '')
+      },
       callback: async (response: any) => {
-        if (response.status === 'success' || response.message === 'Approved') {
-          await saveOrderData();
-          setIsProcessing(false);
-          onSuccess();
-        } else {
-          setIsProcessing(false);
-          alert('Payment was not completed successfully.');
-        }
+        setIsProcessing(false);
+        // Do NOT update order status here, Webhook handles it
+        onSuccess();
       },
       onClose: () => {
         setIsProcessing(false);
@@ -70,9 +71,20 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({ book, userEmail, onClose,
   const handleStripe = async () => {
     setIsProcessing(true);
     try {
-      // Simulate Stripe Success for this demo/environment
-      setTimeout(async () => {
-        await saveOrderData();
+      // Create pending order
+      const order: Partial<Order> = {
+        items: [{ id: book.id, title: book.title, price: book.price || 0, quantity: 1 }],
+        total: book.price || 0,
+        customerName: shipping.fullName || store.currentUser?.fullName || 'Anonymous',
+        customerEmail: userEmail,
+        shippingAddress: book.type === 'physical' || book.type === 'both' ? shipping : undefined,
+        paymentMethod: method,
+        status: 'pending'
+      };
+      await store.addOrder(order);
+      
+      // Simulate Stripe redirect logic or webhook success
+      setTimeout(() => {
         setIsProcessing(false);
         onSuccess();
       }, 2000);

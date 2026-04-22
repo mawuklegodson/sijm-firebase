@@ -103,32 +103,20 @@ const UsherLayout: React.FC<Props> = ({ children, currentUser, onLogout, current
     <div className="flex flex-col min-h-screen bg-gray-50">
       <header className="bg-white h-16 flex items-center justify-between px-6 sticky top-0 z-40 border-b border-gray-100 shadow-sm">
         <div className="flex items-center gap-3">
-          {branding?.logoUrl ? (
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-gray-100 overflow-hidden">
-              <img 
-                src={formatImageUrl(branding.logoUrl)} 
-                alt="Logo" 
-                className="w-8 h-8 object-contain" 
-                referrerPolicy="no-referrer"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (target.src !== logoImg) {
-                    target.src = logoImg;
-                  }
-                }}
-              />
-            </div>
-          ) : (
-            <div 
-              style={{ 
-                background: `radial-gradient(circle at 30% 30%, ${branding?.secondaryColor || '#D4AF37'}, #B8860B)`,
-                boxShadow: '0 3px 8px rgba(0,0,0,0.1)'
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-gray-100 overflow-hidden">
+            <img 
+              src={branding?.logoUrl ? formatImageUrl(branding.logoUrl) : logoImg} 
+              alt="Logo" 
+              className="w-8 h-8 object-contain" 
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (target.src !== logoImg) {
+                  target.src = logoImg;
+                }
               }}
-              className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black border border-white/20"
-            >
-              {general?.churchName?.charAt(0) || 'S'}
-            </div>
-          )}
+            />
+          </div>
           <div>
             <span className="font-poppins font-black text-gray-900 tracking-tighter block leading-none">
               {general?.churchName || 'Salvation In Jesus Ministry'}

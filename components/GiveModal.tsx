@@ -31,31 +31,23 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
 
   const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_06876a2cd7004fc4caa34867fb904ffd87cbcc13';
 
-  const saveDonationData = async () => {
-    const donation: Partial<Donation> = {
-      donorName: donorName || 'Anonymous',
-      donorEmail: email,
-      amount: parseFloat(amount),
-      category: selectedCategory,
-      paymentMethod: method,
-      userId: store.currentUser?.id
-    };
-    await store.addDonation(donation);
-  };
-
   const handlePaystack = () => {
     if (!email) {
       alert('Please enter your email address to continue.');
       return;
     }
     setIsProcessing(true);
+    const tempRef = `DON_${Math.floor(Math.random() * 1000000000 + 1)}`;
     const handler = PaystackPop.setup({
       key: PAYSTACK_PUBLIC_KEY,
       email: email,
       amount: Math.round(parseFloat(amount) * 100), // Pesewas
       currency: 'GHS',
-      ref: `GIVE_${Math.floor(Math.random() * 1000000000 + 1)}`,
+      ref: tempRef,
       metadata: {
+        type: 'donation',
+        category: selectedCategory,
+        donorName: donorName || 'Anonymous',
         custom_fields: [
           {
             display_name: "Category",
@@ -65,14 +57,9 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
         ]
       },
       callback: async (response: any) => {
-        if (response.status === 'success' || response.message === 'Approved') {
-          await saveDonationData();
-          setIsProcessing(false);
-          onSuccess();
-        } else {
-          setIsProcessing(false);
-          alert('Payment was not completed.');
-        }
+        setIsProcessing(false);
+        // Do NOT call saveDonationData here. Webhook handles it.
+        onSuccess();
       },
       onClose: () => {
         setIsProcessing(false);
@@ -90,7 +77,15 @@ const GiveModal: React.FC<GiveModalProps> = ({ initialCategory, userEmail, onClo
     try {
       // Simulate Stripe Success
       setTimeout(async () => {
-        await saveDonationData();
+        const donation: Partial<Donation> = {
+          donorName: donorName || 'Anonymous',
+          donorEmail: email,
+          amount: parseFloat(amount),
+          category: selectedCategory,
+          paymentMethod: method,
+          userId: store.currentUser?.id
+        };
+        await store.addDonation(donation);
         setIsProcessing(false);
         onSuccess();
       }, 2000);

@@ -20,7 +20,7 @@ const WebsiteLayout: React.FC<WebsiteLayoutProps> = ({ children, onNavigate, sto
     <div className="min-h-screen bg-white font-sans overflow-x-hidden selection:bg-amber-400 selection:text-indigo-950">
       <GlobalAnnounceBar broadcasts={store.broadcasts || []} />
       <Navbar onNavigate={onNavigate} store={store} currentPage={currentPage} />
-      <main className="pt-16">
+      <main>
         {children}
       </main>
       <Footer onNavigate={onNavigate} store={store} />

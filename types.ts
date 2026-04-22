@@ -218,6 +218,8 @@ export interface Resource {
   downloadCount: number;
   accessLevel: SermonAccessLevel;
   isFeatured?: boolean;
+  notifyUsers?: boolean;
+  notificationMessage?: string;
   createdAt: string;
 }
 
@@ -420,6 +422,7 @@ export interface SermonAnswer {
 
 export interface Broadcast {
   id: string;
+  title?: string;
   message: string;
   type: 'info' | 'urgent' | 'promo';
   active: boolean;
@@ -427,6 +430,18 @@ export interface Broadcast {
   startDate?: string;
   endDate?: string;
   pushEnabled?: boolean;
+  
+  priority?: 'high' | 'normal' | 'low';
+  target?: {
+    audience: 'all' | 'members' | 'leadership' | 'groups' | 'custom';
+    groupIds?: string[];
+    branches?: string[];
+  };
+  playSound?: boolean;
+  vibrate?: boolean;
+  isRecurring?: boolean;
+  recurringSchedule?: 'daily' | 'weekly' | 'monthly';
+  
   createdAt: string;
 }
 

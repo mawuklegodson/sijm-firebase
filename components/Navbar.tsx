@@ -46,7 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, store, currentPage }) => {
   ];
 
   return (
-    <nav className="fixed top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-indigo-950/80 backdrop-blur-2xl border-b border-white/5 transition-all duration-500">
+    <nav className="sticky top-0 w-full z-50 px-6 py-4 flex justify-between items-center bg-indigo-950/80 backdrop-blur-2xl border-b border-white/5 transition-all duration-500">
       <motion.div 
         className="absolute top-0 left-0 h-[2px] bg-amber-400 origin-left z-50"
         style={{ scaleX: scrollYProgress, width: '100%' }}

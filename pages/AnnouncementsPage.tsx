@@ -337,7 +337,35 @@ const AnnouncementsPage: React.FC<Props> = ({ store, isUsherView, navigate, defa
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-6 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-indigo-100">
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-indigo-900 ml-2">Target Audience</label>
+                         <select value={newBroadcast.target?.audience || 'all'} onChange={e => setNewBroadcast({...newBroadcast, target: { ...newBroadcast.target, audience: e.target.value as any }})} className="w-full px-4 py-3 bg-white rounded-xl border border-indigo-100 text-sm outline-none">
+                           <option value="all">All Users</option>
+                           <option value="members">Members Only</option>
+                           <option value="leadership">Leadership Only</option>
+                         </select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black uppercase tracking-widest text-indigo-900 ml-2">Recurrence</label>
+                         <div className="flex items-center gap-3 h-[46px]">
+                           <label className="flex items-center gap-2 cursor-pointer">
+                             <input type="checkbox" checked={newBroadcast.isRecurring || false} onChange={e => setNewBroadcast({...newBroadcast, isRecurring: e.target.checked})} className="w-4 h-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500" />
+                             <span className="text-sm font-medium">Recurring</span>
+                           </label>
+                           {newBroadcast.isRecurring && (
+                             <select value={newBroadcast.recurringSchedule || 'weekly'} onChange={e => setNewBroadcast({...newBroadcast, recurringSchedule: e.target.value as any})} className="flex-1 px-4 py-2 bg-white rounded-xl border border-indigo-100 text-sm outline-none">
+                               <option value="daily">Daily</option>
+                               <option value="weekly">Weekly</option>
+                               <option value="monthly">Monthly</option>
+                             </select>
+                           )}
+                         </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-indigo-100">
                       <label className="flex items-center gap-3 cursor-pointer">
                         <div onClick={() => setNewBroadcast({...newBroadcast, pushEnabled: !newBroadcast.pushEnabled})} className={`w-12 h-6 rounded-full relative transition-all duration-300 ${newBroadcast.pushEnabled ? 'bg-red-500' : 'bg-gray-300'}`}>
                           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 ${newBroadcast.pushEnabled ? 'left-7' : 'left-1'}`} />
@@ -347,6 +375,19 @@ const AnnouncementsPage: React.FC<Props> = ({ store, isUsherView, navigate, defa
                           <span className="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Alert mobile app users</span>
                         </div>
                       </label>
+
+                      {newBroadcast.pushEnabled && (
+                        <>
+                          <label className="flex items-center gap-2 cursor-pointer ml-4">
+                            <input type="checkbox" checked={newBroadcast.playSound !== false} onChange={e => setNewBroadcast({...newBroadcast, playSound: e.target.checked})} className="w-4 h-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span className="text-xs font-bold text-gray-600">Play Sound</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={newBroadcast.vibrate !== false} onChange={e => setNewBroadcast({...newBroadcast, vibrate: e.target.checked})} className="w-4 h-4 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span className="text-xs font-bold text-gray-600">Vibrate</span>
+                          </label>
+                        </>
+                      )}
                     </div>
 
                     <div className="flex justify-end pt-4 border-t border-indigo-100">

@@ -404,6 +404,25 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // ------------------- LIVE STREAMS -------------------
+    // Real-time chat, prayer, and giving messages during live services
+    match /live_streams/{streamId} {
+      // Anyone can read stream config (isLive status, etc.)
+      allow read: if true;
+      // Only admins/media team can update stream config
+      allow write: if isMediaTeam();
+
+      // Messages subcollection (chat, prayer, gifts)
+      match /messages/{messageId} {
+        // Anyone signed in can read live messages
+        allow read: if isSignedIn();
+        // Signed-in users can send messages
+        allow create: if isSignedIn();
+        // Only admins can update/delete messages (moderation)
+        allow update, delete: if isAdmin();
+      }
+    }
+
     // ------------------- BROADCASTS -------------------
     match /broadcasts/{broadcastId} {
       allow read: if true;

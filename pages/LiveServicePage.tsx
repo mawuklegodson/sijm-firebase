@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import { WorkerPermission } from '../types.ts';
+import { db, isMockMode } from '../lib/firebase.ts';
+import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit } from 'firebase/firestore';
 
 /* ─── types ─── */
 interface LiveMessage { id: string; name: string; text: string; type: 'chat' | 'prayer' | 'gift'; avatar: string; time: string; }
@@ -318,7 +320,7 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
                           permissions.includes(WorkerPermission.ADMIN) ||
                           permissions.includes(WorkerPermission.MEDIA_TEAM);
 
-  /* simulate live updates */
+  /* simulate live updates & listen to firebase */
   useEffect(() => {
     if (!liveConfig.isLive) return;
     const interval = setInterval(() => {
@@ -326,8 +328,37 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
       setAttendanceCount(v => v + Math.floor(Math.random() * 3));
       setServiceTimer(t => t + 1);
     }, 3000);
+    
+    if (liveConfig.chatEnabled && !isMockMode) {
+      try {
+        const q = query(collection(db, 'live_streams', 'default', 'messages'), orderBy('createdAt', 'desc'), limit(100));
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const msgs = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              name: data.name,
+              text: data.text,
+              type: data.type,
+              avatar: data.avatar,
+              time: data.createdAt ? new Date(data.createdAt.toMillis()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'just now'
+            };
+          }) as LiveMessage[];
+          setMessages(msgs.reverse());
+        }, (err) => {
+          console.warn("Live chat sync unavailable. Using local mode.", err);
+        });
+        return () => {
+          clearInterval(interval);
+          unsubscribe();
+        };
+      } catch (e) {
+        console.warn("Firestore not initialized properly for chat", e);
+      }
+    }
+    
     return () => clearInterval(interval);
-  }, [liveConfig.isLive]);
+  }, [liveConfig.isLive, liveConfig.chatEnabled]);
 
   useEffect(() => {
     if (chatRef.current) chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -338,28 +369,49 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
     return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
   };
 
-  const handleSendChat = (e: React.FormEvent) => {
+  const handleSendChat = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
-    const msg: LiveMessage = {
-      id: Date.now().toString(), name: store?.currentUser?.fullName || 'You',
-      text: inputText, type: 'chat', avatar: (store?.currentUser?.fullName?.[0] || 'Y'), time: 'just now'
+    
+    const msgData = {
+      name: store?.currentUser?.fullName || 'You',
+      text: inputText, 
+      type: 'chat', 
+      avatar: (store?.currentUser?.fullName?.[0] || 'Y'), 
+      createdAt: serverTimestamp()
     };
-    setMessages(prev => [...prev, msg]);
+    
     setInputText('');
+    
+    try {
+      await addDoc(collection(db, 'live_streams', 'default', 'messages'), msgData);
+    } catch (err) {
+      console.warn("Falling back to local chat", err);
+      setMessages(prev => [...prev, { ...msgData, id: Date.now().toString(), time: 'just now', type: 'chat' } as LiveMessage]);
+    }
   };
 
-  const handlePrayerSubmit = (e: React.FormEvent) => {
+  const handlePrayerSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!prayerText.trim()) return;
-    const msg: LiveMessage = {
-      id: Date.now().toString(), name: store?.currentUser?.fullName || 'Anonymous',
-      text: prayerText, type: 'prayer', avatar: (store?.currentUser?.fullName?.[0] || 'A'), time: 'just now'
+    
+    const msgData = {
+      name: store?.currentUser?.fullName || 'Anonymous',
+      text: prayerText, 
+      type: 'prayer', 
+      avatar: (store?.currentUser?.fullName?.[0] || 'A'), 
+      createdAt: serverTimestamp()
     };
-    setMessages(prev => [...prev, msg]);
+    
     setPrayerText('');
     setPrayerSent(true);
     setTimeout(() => setPrayerSent(false), 3000);
+
+    try {
+      await addDoc(collection(db, 'live_streams', 'default', 'messages'), msgData);
+    } catch (err) {
+      setMessages(prev => [...prev, { ...msgData, id: Date.now().toString(), time: 'just now', type: 'prayer' } as LiveMessage]);
+    }
   };
 
   const handleGive = async () => {

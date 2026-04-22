@@ -624,6 +624,7 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                   fileSize: String(formData.get('fileSize') || '').trim(),
                   accessLevel: String(formData.get('accessLevel') || SermonAccessLevel.PUBLIC),
                   isFeatured: formData.get('isFeatured') === 'on',
+                  notifyUsers: formData.get('notifyUsers') === 'on',
                 };
                 
                 if (editingResource) {
@@ -740,18 +741,33 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                <input 
-                  type="checkbox" 
-                  name="isFeatured" 
-                  id="isFeatured"
-                  defaultChecked={editingResource?.isFeatured}
-                  className="w-5 h-5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <label htmlFor="isFeatured" className="text-sm font-bold text-indigo-900 flex items-center gap-2">
-                  <Sparkles size={16} className="text-indigo-600" />
-                  Mark as Featured Sermon
-                </label>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
+                  <input 
+                    type="checkbox" 
+                    name="isFeatured" 
+                    id="isFeatured"
+                    defaultChecked={editingResource?.isFeatured}
+                    className="w-5 h-5 rounded border-indigo-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="isFeatured" className="text-sm font-bold text-indigo-900 flex items-center gap-2">
+                    <Sparkles size={16} className="text-indigo-600" />
+                    Mark as Featured Sermon
+                  </label>
+                </div>
+                <div className="flex items-center gap-2 p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <input 
+                    type="checkbox" 
+                    name="notifyUsers" 
+                    id="notifyUsers"
+                    defaultChecked={editingResource?.notifyUsers}
+                    className="w-5 h-5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <label htmlFor="notifyUsers" className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+                    <AlertCircle size={16} className="text-emerald-600" />
+                    Send Push Notification to Users
+                  </label>
+                </div>
               </div>
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={closeModal} className="flex-1 py-3 bg-slate-100 text-slate-600 font-bold rounded-xl hover:bg-slate-200 transition-all">Cancel</button>
