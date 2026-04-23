@@ -43,8 +43,8 @@ const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ store, currentU
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444'];
 
   const filteredOrders = orders.filter(o => {
-    const matchesSearch = o.customerName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          o.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (o.customerName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          (o.customerEmail || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || o.status === filterStatus;
     return matchesSearch && matchesStatus;
   });

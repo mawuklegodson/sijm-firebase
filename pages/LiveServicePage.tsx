@@ -10,7 +10,7 @@ import {
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import { WorkerPermission } from '../types.ts';
 import { db, isMockMode } from '../lib/firebase.ts';
-import { collection, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit } from 'firebase/firestore';
+import { collection, doc, setDoc, query, orderBy, onSnapshot, addDoc, serverTimestamp, limit } from 'firebase/firestore';
 
 /* ─── types ─── */
 interface LiveMessage { id: string; name: string; text: string; type: 'chat' | 'prayer' | 'gift'; avatar: string; time: string; }
@@ -75,7 +75,14 @@ const AdminPanel: React.FC<{
 }> = ({ config, setConfig, onClose }) => {
   const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (!isMockMode) {
+      try {
+        await setDoc(doc(db, 'live_streams', 'default'), config, { merge: true });
+      } catch (err) {
+        console.warn('Failed to save live config to Firestore', err);
+      }
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
@@ -320,14 +327,29 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
                           permissions.includes(WorkerPermission.ADMIN) ||
                           permissions.includes(WorkerPermission.MEDIA_TEAM);
 
+  /* Load config from Firestore */
+  useEffect(() => {
+    if (isMockMode) return;
+    const unsubscribe = onSnapshot(doc(db, 'live_streams', 'default'), (docSnap) => {
+      if (docSnap.exists()) {
+        setLiveConfig(prev => ({ ...prev, ...docSnap.data() }));
+      }
+    }, (err) => {
+      console.warn("Live config sync unavailable. Using local mode.", err);
+    });
+    return () => unsubscribe();
+  }, []);
+
   /* simulate live updates & listen to firebase */
   useEffect(() => {
     if (!liveConfig.isLive) return;
+    
+    // Instead of random faked viewers, we can just use the attendance sections sum 
+    // or keep a steady mock count that doesn't jump randomly if not tracked perfectly.
+    // Let's use a simple service timer for the UI.
     const interval = setInterval(() => {
-      setViewerCount(v => v + Math.floor(Math.random() * 5 - 2));
-      setAttendanceCount(v => v + Math.floor(Math.random() * 3));
       setServiceTimer(t => t + 1);
-    }, 3000);
+    }, 1000);
     
     if (liveConfig.chatEnabled && !isMockMode) {
       try {

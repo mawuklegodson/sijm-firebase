@@ -448,8 +448,8 @@ export interface Broadcast {
 export interface Order {
   id: string;
   userId?: string;
-  userEmail: string;
-  userName: string;
+  customerEmail: string;
+  customerName: string;
   items: {
     id: string;
     title: string;
@@ -458,8 +458,8 @@ export interface Order {
   }[];
   total: number;
   currency: string;
-  paymentGateway: 'Stripe' | 'Paystack';
-  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled';
+  paymentMethod: 'stripe' | 'paystack' | 'Stripe' | 'Paystack' | string;
+  status: 'Pending' | 'Shipped' | 'Delivered' | 'Cancelled' | 'pending' | 'processing' | 'shipped' | 'delivered';
   shippingAddress?: {
     street: string;
     city: string;
@@ -473,12 +473,12 @@ export interface Order {
 export interface Donation {
   id: string;
   userId?: string;
-  userEmail: string;
-  userName: string;
+  donorEmail: string;
+  donorName: string;
   amount: number;
   currency: string;
   category: string;
-  paymentGateway: 'Stripe' | 'Paystack';
+  paymentMethod: 'stripe' | 'paystack' | 'Stripe' | 'Paystack' | string;
   createdAt: string;
 }
 

@@ -18,7 +18,8 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ onRefresh, children }) =>
 
   const handleTouchStart = useCallback((e: TouchEvent) => {
     // Only start pulling if scrolled to top
-    if (window.scrollY === 0 && !isRefreshing) {
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    if (scrollTop <= 5 && !isRefreshing) {
       startYRef.current = e.touches[0].clientY;
       isPullingRef.current = true;
     }
@@ -100,8 +101,9 @@ const PullToRefresh: React.FC<PullToRefreshProps> = ({ onRefresh, children }) =>
 
       {/* Content wrapper — shifts down during pull */}
       <motion.div
-        style={{ y: isRefreshing ? 50 : pullDistance > 0 ? pullDistance : 0 }}
+        style={{ paddingTop: isRefreshing ? 50 : pullDistance > 0 ? pullDistance : 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+        className="min-h-screen flex flex-col relative"
       >
         {children}
       </motion.div>
