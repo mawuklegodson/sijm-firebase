@@ -568,7 +568,33 @@ export const DEFAULT_SETTINGS = {
   customTags: ['High Attendance', 'Tithe Faithful', 'Choral', 'Volunteer'],
   serviceTypes: ['Morning Service', 'Evening Service', 'Midweek Service', 'Special Event', 'Youth Service', 'Bible Study'],
   branches: ['Main Branch', 'Lagos Branch', 'Abuja Branch', 'Port Harcourt Branch'],
-  attendanceSegments: ['Main Hall', 'Gallery', 'Overflow 1', 'Overflow 2', 'Children Church', 'Teen Church', 'Youth Hall']
+  attendanceSegments: ['Main Hall', 'Gallery', 'Overflow 1', 'Overflow 2', 'Children Church', 'Teen Church', 'Youth Hall'],
+  liveStream: {
+    // YouTube Data API v3
+    youtubeApiKey:    '',   // AIza...
+    youtubeChannelId: '',   // UC...
+    // Facebook Graph API
+    facebookPageId:   '',   // numeric page ID
+    facebookAccessToken: '', // page access token
+    // Manual override (if auto-detect is off or API quota exceeded)
+    manualOverride:   false,
+    manualIsLive:     false,
+    manualYoutubeUrl: '',   // full embed URL for manual override
+    manualFacebookUrl: '',
+    // Active platform shown in app
+    preferredPlatform: 'youtube' as 'youtube' | 'facebook' | 'both',
+    // Service info shown in app
+    serviceType:   'Sunday Service',
+    preacher:      '',
+    sermonSeries:  '',
+    // Features
+    chatEnabled:    true,
+    prayerEnabled:  true,
+    givingEnabled:  true,
+    // Push notification text when going live
+    notificationTitle: 'We Are Live! 🔴',
+    notificationBody:  'SIJM is streaming now. Tap to join the service.',
+  }
 };
 
 export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
