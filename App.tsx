@@ -238,9 +238,14 @@ const App: React.FC = () => {
       switch (currentPage) {
         case 'dashboard': return <MemberDashboard store={store} navigate={setCurrentPage} />;
         case 'prayer': return <PrayerPage store={store} navigate={setCurrentPage} />;
+        case 'prayer_requests': return <PrayerRequestsPage store={store} navigate={setCurrentPage} />;
+        case 'prayer-requests': return <PrayerRequestsPage store={store} navigate={setCurrentPage} />;
         case 'events': return <EventsPage store={store} onNavigate={() => setCurrentPage('dashboard')} />;
         case 'downloads': return <DownloadsPage store={store} navigate={setCurrentPage} />;
         case 'groups': return <GroupsPage navigate={setCurrentPage} />;
+        case 'announcements': return <AnnouncementsPage store={store} navigate={setCurrentPage} />;
+        case 'financial': return <FinancialDashboard store={store} currentUser={store.currentUser} onLogout={store.logout} navigate={setCurrentPage} />;
+        case 'giving': return <GivingPage onNavigate={setCurrentPage} store={store} />;
         case 'bible_studies': return <ResourceCategoryPage category="Bible Studies" onBack={() => setCurrentPage('dashboard')} />;
         case 'morning_devotion': return <ResourceCategoryPage category="Morning Devotion" onBack={() => setCurrentPage('dashboard')} />;
         case 'prayer_guides': return <ResourceCategoryPage category="Prayer Guides" onBack={() => setCurrentPage('dashboard')} />;
@@ -250,7 +255,9 @@ const App: React.FC = () => {
         case 'member_dashboard': return <MemberDashboard store={store} navigate={setCurrentPage} />;
         case 'chat': return <ChatPage store={store} navigate={setCurrentPage} />;
         case 'live': return <LiveServicePage onNavigate={setCurrentPage} store={store} />;
+        case 'live-service': return <LiveServicePage onNavigate={setCurrentPage} store={store} />;
         case 'books': return <BooksPage onNavigate={setCurrentPage} store={store} />;
+        case 'settings': return <SettingsPage store={store} navigate={setCurrentPage} />;
         default: return <LandingPage onNavigate={setCurrentPage} store={store} />;
       }
     }
