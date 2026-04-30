@@ -1,31 +1,15 @@
-
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { User, WorkerPermission } from '../types.ts';
 import { formatImageUrl } from '../store.ts';
 import NotificationBell from './NotificationBell.tsx';
+import { useIsMobile } from '../hooks/useIsMobile.ts';
 const logoImg = '/assets/logo.png';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Clock, 
-  AlertCircle, 
-  Package, 
-  LogOut, 
-  Menu, 
-  CalendarCheck,
-  UserX,
-  Megaphone,
-  FileBarChart,
-  Settings,
-  ShieldCheck,
-  UserSquare2,
-  Download,
-  Globe,
-  Heart,
-  MessageSquare,
-  Radio,
-  BookOpen
+import {
+  LayoutDashboard, Users, Clock, AlertCircle, Package, LogOut,
+  Menu, X, CalendarCheck, UserX, Megaphone, FileBarChart, Settings,
+  ShieldCheck, UserSquare2, Download, Globe, Heart, MessageSquare,
+  Radio, BookOpen, Home, MoreHorizontal, ChevronRight,
 } from 'lucide-react';
 
 interface Props {
@@ -39,162 +23,256 @@ interface Props {
   onInstall?: () => void;
 }
 
-const AdminLayout: React.FC<Props> = ({ children, currentUser, onLogout, currentPage, setCurrentPage, store, showInstallButton, onInstall }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const terminology = store?.settings?.terminology;
-  const general = store?.settings?.general;
-  const branding = store?.settings?.branding;
+const B = {
+  navy: '#0a1a6b', royal: '#1a3acc', purple: '#7c3aed',
+  white: '#ffffff', off: '#f8faff', text: '#0f172a', muted: '#64748b',
+};
 
-  const menuItems = [
-    { id: 'landing', label: 'View Website', icon: Globe },
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    ...(currentUser.workerPermissions.includes(WorkerPermission.SUPER_ADMIN) ? [
-      { id: 'landing_editor', label: 'Landing Page CMS', icon: Globe }
+const AdminLayout: React.FC<Props> = ({
+  children, currentUser, onLogout, currentPage, setCurrentPage,
+  store, showInstallButton, onInstall,
+}) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [moreOpen,    setMoreOpen]    = useState(false);
+  const isMobile = useIsMobile();
+
+  const terminology = store?.settings?.terminology;
+  const general     = store?.settings?.general;
+  const branding    = store?.settings?.branding;
+  const isSuperAdmin = currentUser.workerPermissions.includes(WorkerPermission.SUPER_ADMIN);
+
+  const menuItems = useMemo(() => [
+    { id: 'dashboard',      label: 'Dashboard',    icon: LayoutDashboard },
+    { id: 'landing',        label: 'Website',      icon: Globe },
+    { id: 'attendance',     label: terminology?.servicePlural || 'Attendance',   icon: Clock },
+    { id: 'members',        label: terminology?.memberPlural  || 'Members',      icon: UserSquare2 },
+    { id: 'first_timers',   label: terminology?.firstTimerPlural || 'First Timers', icon: Users },
+    { id: 'absentees',      label: 'Absentees',    icon: UserX },
+    { id: 'reminders',      label: 'Reminders',    icon: CalendarCheck },
+    { id: 'complaints',     label: 'Complaints',   icon: AlertCircle },
+    { id: 'announcements',  label: 'Announcements',icon: Megaphone },
+    { id: 'prayer_requests',label: 'Prayer',       icon: Heart },
+    { id: 'chat',           label: 'Chat',         icon: MessageSquare },
+    { id: 'assets',         label: 'Assets',       icon: Package },
+    { id: 'ushers',         label: terminology?.usherPlural || 'Ushers', icon: ShieldCheck },
+    { id: 'reports',        label: 'Reports',      icon: FileBarChart },
+    { id: 'downloads',      label: 'Downloads',    icon: Download },
+    { id: 'live',           label: 'Live',         icon: Radio },
+    { id: 'books',          label: 'Books',        icon: BookOpen },
+    ...(isSuperAdmin ? [
+      { id: 'financials',   label: 'Financials',   icon: FileBarChart },
+      { id: 'broadcasts',   label: 'Broadcasts',   icon: Megaphone },
+      { id: 'settings',     label: 'Settings',     icon: Settings },
     ] : []),
-    { id: 'attendance', label: terminology?.servicePlural || 'Attendance', icon: Clock },
-    { id: 'members', label: terminology?.memberPlural || 'Members', icon: UserSquare2 },
-    { id: 'first_timers', label: terminology?.firstTimerPlural || 'First Timers', icon: Users },
-    { id: 'absentees', label: (terminology?.memberPlural ? terminology.memberPlural + ' Absentees' : 'Absentees'), icon: UserX },
-    { id: 'reminders', label: 'Reminders', icon: CalendarCheck },
-    { id: 'complaints', label: 'Complaints', icon: AlertCircle },
-    { id: 'announcements', label: 'Announcements', icon: Megaphone },
-    { id: 'prayer', label: 'Send Prayer Request', icon: Heart },
-    { id: 'prayer_requests', label: 'Prayer Requests', icon: Heart },
-    { id: 'chat', label: 'Divine Chat', icon: MessageSquare },
-    { id: 'assets', label: 'Assets', icon: Package },
-    { id: 'ushers', label: terminology?.usherPlural || 'Ushers', icon: ShieldCheck },
-    { id: 'reports', label: 'Reports', icon: FileBarChart },
-    { id: 'downloads', label: 'Downloads', icon: Download },
-    { id: 'live', label: 'Live Service', icon: Radio },
-    { id: 'books', label: 'Books Manager', icon: BookOpen },
-    ...(currentUser.workerPermissions.includes(WorkerPermission.SUPER_ADMIN) ? [
-      { id: 'financials', label: 'Financial Hub', icon: FileBarChart },
-      { id: 'broadcasts', label: 'Site Broadcasts', icon: Megaphone },
-      { id: 'settings', label: 'Settings', icon: Settings }
-    ] : []),
+  ], [terminology, isSuperAdmin]);
+
+  // Bottom nav tabs (mobile — 4 pinned + More)
+  const bottomTabs = [
+    { id: 'dashboard',   label: 'Home',    icon: Home },
+    { id: 'members',     label: 'Members', icon: UserSquare2 },
+    { id: 'attendance',  label: 'Services',icon: Clock },
+    { id: 'reports',     label: 'Reports', icon: FileBarChart },
   ];
+
+  const navigate = (id: string) => { setCurrentPage(id); setSidebarOpen(false); setMoreOpen(false); };
+
+  const Sidebar = () => (
+    <aside
+      style={{ backgroundColor: 'var(--sidebar-bg, #0a1a6b)', color: 'var(--sidebar-text, white)' }}
+      className="flex flex-col h-full w-64 shadow-2xl">
+      <div className="p-5 border-b shrink-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shrink-0 overflow-hidden border border-white/20">
+            <img src={branding?.logoUrl ? formatImageUrl(branding.logoUrl) : logoImg} alt="Logo"
+              className="w-8 h-8 object-contain" referrerPolicy="no-referrer"
+              onError={e => { if ((e.target as HTMLImageElement).src !== logoImg) (e.target as HTMLImageElement).src = logoImg; }} />
+          </div>
+          <div className="min-w-0">
+            <p className="font-black text-[13px] truncate">{general?.churchName || 'SIJM'}</p>
+            <p className="text-[8px] uppercase tracking-[0.2em] opacity-50 font-black truncate">Admin Portal</p>
+          </div>
+        </div>
+      </div>
+
+      <nav className="flex-1 py-3 px-3 overflow-y-auto space-y-0.5">
+        {menuItems.map(item => {
+          const active = currentPage === item.id;
+          return (
+            <button key={item.id} onClick={() => navigate(item.id)}
+              style={{
+                backgroundColor: active ? 'var(--sidebar-active-bg, #1a3acc)' : 'transparent',
+                color: active ? 'var(--sidebar-active-text, white)' : 'inherit',
+              }}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group
+                ${active ? 'shadow-lg font-bold' : 'opacity-60 hover:opacity-100 hover:bg-white/5'}`}>
+              {active && (
+                <motion.div layoutId="admin-active"
+                  className="absolute left-0 w-1 h-5 rounded-r-full bg-white" />
+              )}
+              <item.icon size={16} />
+              <span className="text-[10px] uppercase tracking-widest font-black">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="p-4 border-t shrink-0" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center font-black text-white text-sm">
+            {currentUser.fullName.charAt(0)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-[11px] truncate">{currentUser.fullName}</p>
+            <p className="text-[9px] opacity-50 truncate">{currentUser.identityRole}</p>
+          </div>
+        </div>
+        <button onClick={onLogout}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl opacity-60 hover:opacity-100 hover:text-red-400 transition-all">
+          <LogOut size={15} />
+          <span className="text-[10px] font-black uppercase tracking-widest">Logout</span>
+        </button>
+      </div>
+    </aside>
+  );
 
   return (
     <div className="flex min-h-screen">
-      <aside 
-        style={{ backgroundColor: 'var(--sidebar-bg)', color: 'var(--sidebar-text)' }}
-        className={`
-          fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-200 ease-in-out shadow-xl
-          ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:block
-        `}
-      >
-        <div className="p-6">
-          <div className="flex items-center gap-3">
-             <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm shrink-0 border border-white/20 overflow-hidden">
-               <img 
-                 src={branding?.logoUrl ? formatImageUrl(branding.logoUrl) : logoImg} 
-                 alt="Church Logo" 
-                 className="w-10 h-10 object-contain" 
-                 referrerPolicy="no-referrer"
-                 onError={(e) => {
-                   const target = e.target as HTMLImageElement;
-                   if (target.src !== logoImg) {
-                     target.src = logoImg;
-                   }
-                 }}
-               />
-             </div>
-             <div className="min-w-0">
-               <span className="truncate leading-tight text-base font-bold font-poppins block">{general?.churchName || 'Salvation In Jesus Ministry'}</span>
-               <p style={{ opacity: 0.6 }} className="text-[8px] uppercase tracking-[0.2em] font-black truncate">{general?.tagline || 'Look Unto Jesus: The Only Name That Saves.'}</p>
-             </div>
-          </div>
-        </div>
-        
-        <nav className="mt-6 px-4 space-y-2 pb-20 overflow-y-auto max-h-[calc(100vh-140px)] no-scrollbar">
-          {menuItems.map((item) => {
-            const isActive = currentPage === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => { setCurrentPage(item.id); setIsOpen(false); }}
-                style={{
-                  backgroundColor: isActive ? 'var(--sidebar-active-bg)' : 'transparent',
-                  color: isActive ? 'var(--sidebar-active-text)' : 'inherit'
-                }}
-                className={`
-                  w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-500 group relative
-                  ${isActive 
-                    ? 'shadow-xl shadow-black/20 scale-[1.02] font-bold' 
-                    : 'hover:bg-white/5 opacity-60 hover:opacity-100'}
-                `}
-              >
-                <item.icon size={20} className={`transition-transform duration-500 ${isActive ? 'stroke-[2.5] scale-110' : 'group-hover:scale-110'}`} />
-                <span className="text-[10px] uppercase tracking-[0.2em] font-black">{item.label}</span>
-                {isActive && (
-                  <motion.div 
-                    layoutId="sidebar-active-indicator"
-                    className="absolute left-0 w-1 h-6 bg-white rounded-r-full"
-                    transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}
-                  />
-                )}
-              </button>
-            );
-          })}
 
-          {showInstallButton && onInstall && (
-            <button
-              onClick={onInstall}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 hover:bg-white/10 opacity-80 hover:opacity-100 mt-4 border border-white/10"
-            >
-              <Download size={18} />
-              <span className="font-bold text-xs uppercase tracking-wider text-emerald-400">Install App</span>
+      {/* ── DESKTOP sidebar ── */}
+      <div className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-64">
+        <Sidebar />
+      </div>
+
+      {/* ── MOBILE sidebar drawer ── */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)} />
+            <motion.div initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
+              transition={{ type: 'spring', damping: 28 }}
+              className="fixed inset-y-0 left-0 z-50 lg:hidden">
+              <Sidebar />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-64">
+
+        {/* Top bar */}
+        <header
+          style={{ backgroundColor: 'var(--header-bg, white)', color: 'var(--header-text, #0f172a)' }}
+          className="sticky top-0 z-30 h-14 lg:h-16 flex items-center justify-between px-4 lg:px-6 border-b border-slate-100 shadow-sm">
+
+          {/* Mobile: hamburger */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <button className="p-2 rounded-xl" style={{ background: B.off }}
+              onClick={() => setSidebarOpen(true)}>
+              <Menu size={18} style={{ color: B.muted }} />
             </button>
-          )}
-          
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center gap-3 px-4 py-8 opacity-70 hover:opacity-100 hover:text-rose-400 mt-auto transition-all border-t border-white/10"
-          >
-            <LogOut size={20} />
-            <span className="font-bold uppercase tracking-widest text-xs">Logout</span>
-          </button>
-        </nav>
-      </aside>
+            <span className="font-black text-[13px]" style={{ color: B.navy }}>
+              {general?.churchName || 'SIJM'}
+            </span>
+          </div>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header 
-          style={{ backgroundColor: 'var(--header-bg)', color: 'var(--header-text)' }}
-          className="shadow-sm h-16 flex items-center justify-between px-6 sticky top-0 z-30 transition-colors duration-300"
-        >
-          <button className="lg:hidden p-2 text-current" onClick={() => setIsOpen(true)}>
-            <Menu size={24} />
-          </button>
-          
-          <div className="flex items-center gap-4 ml-auto">
-            <NotificationBell 
-              currentUser={currentUser} 
-              onNavigate={(link) => {
-                const params = new URLSearchParams(link.split('?')[1]);
-                const page = params.get('page');
-                if (page) {
-                  setCurrentPage(page);
-                }
-              }} 
-            />
+          {/* Desktop: page title area (empty, filled by sidebar brand) */}
+          <div className="hidden lg:block" />
+
+          <div className="flex items-center gap-3">
+            <NotificationBell currentUser={currentUser}
+              onNavigate={(link: string) => {
+                const p = new URLSearchParams(link.split('?')[1]).get('page');
+                if (p) setCurrentPage(p);
+              }} />
             <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold">{currentUser.fullName}</p>
-              <p className="text-[10px] opacity-60 font-black uppercase tracking-widest">{currentUser.identityRole}</p>
+              <p className="text-sm font-bold leading-none">{currentUser.fullName}</p>
+              <p className="text-[9px] opacity-60 font-black uppercase tracking-widest mt-0.5">{currentUser.identityRole}</p>
             </div>
-            <div 
-              style={{ backgroundColor: 'var(--color-primary)' }}
-              className="w-10 h-10 text-white rounded-2xl flex items-center justify-center font-bold shadow-md"
-            >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-black text-white text-sm"
+                 style={{ background: `linear-gradient(135deg, ${B.royal}, ${B.purple})` }}>
               {currentUser.fullName.charAt(0)}
             </div>
           </div>
         </header>
-        
-        <main className="flex-1 p-4 lg:p-12 overflow-y-auto">
+
+        {/* Page content */}
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto pb-24 lg:pb-8">
           {children}
         </main>
+
+        {/* ── MOBILE bottom nav ── */}
+        {isMobile && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-100 flex"
+               style={{ paddingBottom: 'env(safe-area-inset-bottom,0px)' }}>
+            {bottomTabs.map(tab => {
+              const active = currentPage === tab.id;
+              return (
+                <button key={tab.id} onClick={() => navigate(tab.id)}
+                  className="flex-1 flex flex-col items-center gap-1 py-2 transition-all">
+                  <tab.icon size={19} style={{ color: active ? B.royal : B.muted }} fill={active && tab.id === 'dashboard' ? B.royal : 'none'} />
+                  <span className="text-[9px] font-bold" style={{ color: active ? B.royal : B.muted }}>{tab.label}</span>
+                  {active && <div className="w-1 h-1 rounded-full" style={{ background: B.royal }} />}
+                </button>
+              );
+            })}
+
+            {/* More button */}
+            <button onClick={() => setMoreOpen(true)}
+              className="flex-1 flex flex-col items-center gap-1 py-2">
+              <MoreHorizontal size={19} style={{ color: B.muted }} />
+              <span className="text-[9px] font-bold" style={{ color: B.muted }}>More</span>
+            </button>
+          </div>
+        )}
+
+        {/* ── More sheet (mobile) ── */}
+        <AnimatePresence>
+          {moreOpen && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] bg-black/50 flex items-end lg:hidden"
+              onClick={() => setMoreOpen(false)}>
+              <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                transition={{ type: 'spring', damping: 28 }}
+                className="bg-white w-full rounded-t-3xl max-h-[75vh] overflow-y-auto"
+                onClick={e => e.stopPropagation()}>
+                <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mt-3 mb-4" />
+                <div className="px-5 pb-10">
+                  <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: B.muted }}>
+                    All Sections
+                  </p>
+                  <div className="space-y-1">
+                    {menuItems.map(item => {
+                      const active = currentPage === item.id;
+                      return (
+                        <button key={item.id} onClick={() => navigate(item.id)}
+                          className="w-full flex items-center gap-3 p-3.5 rounded-2xl transition-all"
+                          style={{ background: active ? '#eff6ff' : 'transparent' }}>
+                          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                               style={{ background: active ? B.royal : B.off }}>
+                            <item.icon size={16} style={{ color: active ? B.white : B.muted }} />
+                          </div>
+                          <span className="font-black text-[13px]" style={{ color: active ? B.royal : B.text }}>
+                            {item.label}
+                          </span>
+                          <ChevronRight size={13} style={{ color: B.muted, marginLeft: 'auto' }} />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button onClick={onLogout}
+                    className="w-full flex items-center justify-center gap-2 mt-4 py-4 rounded-2xl text-red-500 font-black text-[13px]"
+                    style={{ background: '#fff1f2', border: '1px solid #fecdd3' }}>
+                    <LogOut size={15} /> Sign Out
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-      {isOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setIsOpen(false)} />}
     </div>
   );
 };

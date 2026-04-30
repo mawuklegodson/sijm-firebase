@@ -1,15 +1,17 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { 
-  Users, TrendingUp, Calendar, Heart, ArrowUpRight, ArrowDownRight, 
-  Clock, Phone, MapPin, ChevronRight, KeyRound, UserMinus, UserCheck, 
-  ShieldCheck, AlertTriangle, CheckCircle2, Copy, X, ShieldAlert, 
+import {
+  Users, TrendingUp, Calendar, Heart, ArrowUpRight, ArrowDownRight,
+  Clock, Phone, MapPin, ChevronRight, KeyRound, UserMinus, UserCheck,
+  ShieldCheck, AlertTriangle, CheckCircle2, Copy, X, ShieldAlert,
   Sparkles, BrainCircuit, Zap, RefreshCw, Loader2, Eye, ImageIcon,
   Activity, Globe, AlertCircle
 } from 'lucide-react';
 import { ReminderType, IdentityRole, WorkerPermission, User } from '../types.ts';
 import { SystemActivity } from '../store.ts';
 import { GoogleGenAI } from "@google/genai";
+import { useIsMobile } from '../hooks/useIsMobile.ts';
+import { motion } from 'framer-motion';
 
 interface Props {
   store: any;
@@ -23,6 +25,9 @@ const AdminDashboard: React.FC<Props> = ({ store, navigate }) => {
     currentUser, activities, assets, members
   } = store;
   const ui = settings.uiText;
+  const isMobile = useIsMobile();
+
+  const isSuperAdmin = currentUser?.workerPermissions?.includes(WorkerPermission.SUPER_ADMIN);
 
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -162,6 +167,79 @@ const AdminDashboard: React.FC<Props> = ({ store, navigate }) => {
   ];
 
   const isSuperAdmin = currentUser?.workerPermissions?.includes(WorkerPermission.SUPER_ADMIN);
+
+  const B = { navy: '#0a1a6b', royal: '#1a3acc', purple: '#7c3aed', off: '#f8faff', text: '#0f172a', muted: '#64748b' };
+
+  const mobileStats = [
+    { label: 'Members',     value: members?.length || 0,                                                            grad: `linear-gradient(135deg,${B.navy},${B.royal})` },
+    { label: 'Attendance',  value: attendance?.[0]?.totalCount || 0,                                                grad: `linear-gradient(135deg,#065f46,#059669)` },
+    { label: 'First Timers',value: firstTimers?.length || 0,                                                        grad: `linear-gradient(135deg,#d97706,#92400e)` },
+    { label: 'Open Issues', value: complaints?.filter((c: any) => c.status === 'Open').length || 0,                 grad: `linear-gradient(135deg,#be185d,#e11d48)` },
+  ];
+
+  const mobileActions = [
+    { id: 'members',      label: 'Members',      Icon: Users },
+    { id: 'attendance',   label: 'Attendance',   Icon: Clock },
+    { id: 'first_timers', label: 'First Timers', Icon: Users },
+    { id: 'announcements',label: 'Announce',     Icon: AlertCircle },
+    { id: 'reports',      label: 'Reports',      Icon: TrendingUp },
+    { id: 'settings',     label: 'Settings',     Icon: ShieldCheck },
+  ];
+
+  if (isMobile) {
+    return (
+      <div className="pb-6" style={{ background: B.off }}>
+        <div className="px-4 pt-2 pb-8"
+             style={{ background: `linear-gradient(135deg,${B.navy},${B.royal})` }}>
+          <p className="text-white/70 text-[11px] mb-1">{ui?.admin_dash_subtitle || 'Ministry overview'}</p>
+          <h2 className="text-white font-black text-[20px]">{ui?.admin_dash_title || 'Admin Dashboard'}</h2>
+        </div>
+        <div className="-mt-4 rounded-t-3xl pt-4" style={{ background: B.off }}>
+          <div className="grid grid-cols-2 gap-3 px-4 mb-4">
+            {mobileStats.map((s, i) => (
+              <motion.div key={s.label}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.06 }}
+                className="rounded-2xl p-4 text-white" style={{ background: s.grad }}>
+                <p className="text-[22px] font-black">{s.value}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/70 mt-0.5">{s.label}</p>
+              </motion.div>
+            ))}
+          </div>
+          <div className="px-4 mb-4">
+            <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: B.muted }}>Quick Navigation</p>
+            <div className="grid grid-cols-3 gap-2">
+              {mobileActions.map(a => (
+                <button key={a.id} onClick={() => navigate(a.id)}
+                  className="flex flex-col items-center gap-2 py-4 rounded-2xl bg-white border border-slate-100 active:scale-95 transition-all">
+                  <a.Icon size={18} style={{ color: B.royal }} />
+                  <span className="text-[9px] font-black uppercase tracking-widest" style={{ color: B.muted }}>{a.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          {activities?.length > 0 && (
+            <div className="px-4">
+              <p className="text-[10px] font-black uppercase tracking-widest mb-3" style={{ color: B.muted }}>Recent Activity</p>
+              <div className="space-y-2">
+                {activities.slice(0, 6).map((act: any, idx: number) => (
+                  <div key={act.id || idx} className="bg-white rounded-2xl border border-slate-100 p-3.5 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: B.off }}>
+                      <Activity size={14} style={{ color: B.royal }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[12px] font-bold line-clamp-1" style={{ color: B.text }}>{act.description || act.title}</p>
+                      <p className="text-[9px]" style={{ color: B.muted }}>{act.time || act.date || ''}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 lg:space-y-20 max-w-full mx-auto">
