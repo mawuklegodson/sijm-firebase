@@ -26,7 +26,8 @@ import {
 import { Resource, IdentityRole, SermonAccessLevel, WorkerPermission } from '../types.ts';
 import { motion, AnimatePresence } from 'motion/react';
 import SermonQandA from '../components/SermonQandA.tsx';
-import { Lock, Globe, UserCheck } from 'lucide-react';
+import { Lock, Globe, UserCheck, AlertCircle } from 'lucide-react';
+import { canAccessResource, getUserClearance, getAccessBadge, SUSPENSION_MESSAGE } from '../utils/accessControl.ts';
 import {
   getDriveDirectLink,
   getPlayableMediaUrl,
@@ -94,41 +95,18 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
 
   const filteredResources = useMemo(() => {
     if (!store.resources) return [];
-    
-    return store.resources.filter((res: Resource) => {
-      const userRole = store.currentUser?.identityRole || IdentityRole.MEMBER;
-      const isLeadership = [
-        IdentityRole.PASTOR,
-        IdentityRole.APOSTLE,
-        IdentityRole.PROPHET,
-        IdentityRole.TEACHER,
-        IdentityRole.EVANGELIST,
-      ].includes(userRole);
-      const isSuperAdmin =
-        store.currentUser?.workerPermissions?.includes(WorkerPermission.SUPER_ADMIN);
-      
-      let hasAccess = false;
-      const level = (res.accessLevel || '').toLowerCase();
-      const isPublic = level.includes('public') || level === 'general public' || level === 'all' || level === '' || level === 'any';
-      const isMemberOnly = level.includes('member');
-      const isLeadershipOnly = level.includes('leadership');
+    const currentUser = store.currentUser;
 
-      if (isSuperAdmin || isLeadership) {
-        hasAccess = true;
-      } else if (userRole === IdentityRole.MEMBER) {
-        hasAccess = isPublic || isMemberOnly;
-      } else {
-        hasAccess = isPublic;
-      }
-      
-      if (!hasAccess && !isAdmin) return false;
-      
-      const title = (res.title || '').toLowerCase();
+    return store.resources.filter((res: Resource) => {
+      // Use the shared utility — fixes the isAdmin bug and handles all roles correctly
+      if (!canAccessResource(res, currentUser) && !isAdmin) return false;
+
+      const title       = (res.title       || '').toLowerCase();
       const description = (res.description || '').toLowerCase();
-      const term = searchTerm.toLowerCase();
-      const matchesSearch = title.includes(term) || description.includes(term);
+      const term        = searchTerm.toLowerCase();
+      const matchesSearch   = title.includes(term) || description.includes(term);
       const matchesCategory = selectedCategory === 'All' || res.category === selectedCategory;
-      
+
       return matchesSearch && matchesCategory;
     });
   }, [store.resources, store.currentUser, searchTerm, selectedCategory, isAdmin]);
@@ -385,24 +363,18 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                     <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-indigo-600 text-xs font-bold rounded-full shadow-sm">
                       {res.category}
                     </span>
-                    <span
-                      className={`px-3 py-1 backdrop-blur-sm text-xs font-bold rounded-full shadow-sm flex items-center gap-1 ${
-                        res.accessLevel === SermonAccessLevel.PUBLIC
-                          ? 'bg-emerald-500/90 text-white'
-                          : res.accessLevel === SermonAccessLevel.MEMBER
-                          ? 'bg-amber-500/90 text-white'
-                          : 'bg-rose-500/90 text-white'
-                      }`}
-                    >
-                      {res.accessLevel === SermonAccessLevel.PUBLIC ? (
-                        <Globe size={10} />
-                      ) : res.accessLevel === SermonAccessLevel.MEMBER ? (
-                        <UserCheck size={10} />
-                      ) : (
-                        <Lock size={10} />
-                      )}
-                      {res.accessLevel}
-                    </span>
+                    {(() => {
+                      const badge = getAccessBadge(res.accessLevel);
+                      return (
+                        <span className="px-3 py-1 backdrop-blur-sm text-xs font-bold rounded-full shadow-sm flex items-center gap-1"
+                              style={{ background: badge.bg + 'ee', color: badge.color }}>
+                          {res.accessLevel === SermonAccessLevel.LEADERSHIP ? <Lock size={10} /> :
+                           res.accessLevel === SermonAccessLevel.MEMBER ? <UserCheck size={10} /> :
+                           <Globe size={10} />}
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
 

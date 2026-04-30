@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Gender, IdentityRole, WorkerPermission } from '../types';
+import { Gender, IdentityRole, WorkerPermission, SermonAccessLevel } from '../types';
+import { filterResources, canAccessResource, getUserClearance, getAccessBadge, SUSPENSION_MESSAGE } from '../utils/accessControl.ts';
 import {
   Play, Download, BookOpen, Music, Calendar, Heart,
   User as UserIcon, MapPin, Phone, Cake, Save, X,
@@ -959,7 +960,8 @@ const MemberDashboard: React.FC<MemberDashboardProps> = ({ store, navigate }) =>
     });
   }, []);
 
-  const handleNavigate = useCallback((page: string) => { navigate(page); }, [navigate]);
+  const clearance = getUserClearance(currentUser);
+  const isSuspended = clearance === 'none';
 
   const handleTabSelect = (tab: string) => {
     if (tab === 'sermons') { setShowSermons(true); return; }
@@ -969,9 +971,12 @@ const MemberDashboard: React.FC<MemberDashboardProps> = ({ store, navigate }) =>
     setActiveTab(tab);
   };
 
-  // Sorted resources
-  const sorted = [...resources].sort((a: any, b: any) =>
-    new Date(b.date || b.createdAt || 0).getTime() - new Date(a.date || a.createdAt || 0).getTime()
+  // Sorted + access-filtered resources
+  const sorted = filterResources(
+    [...resources].sort((a: any, b: any) =>
+      new Date(b.date || b.createdAt || 0).getTime() - new Date(a.date || a.createdAt || 0).getTime()
+    ),
+    currentUser
   );
 
   const newSermons = sorted.filter((r: any) => r.category === 'Sermon').slice(0, 8);
@@ -1100,6 +1105,18 @@ const MemberDashboard: React.FC<MemberDashboardProps> = ({ store, navigate }) =>
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Suspension banner */}
+            {isSuspended && (
+              <div className="mx-4 mb-4 rounded-2xl p-4 flex items-start gap-3"
+                   style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+                <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-black text-[12px] text-red-700">Sermon Access Suspended</p>
+                  <p className="text-[11px] text-red-600 mt-0.5 leading-relaxed">{SUSPENSION_MESSAGE}</p>
+                </div>
+              </div>
+            )}
 
             {/* Announcements */}
             {approvedAnnouncements.length > 0 && (

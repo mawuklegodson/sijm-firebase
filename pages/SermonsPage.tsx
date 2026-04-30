@@ -1,11 +1,12 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Play, Download, Music, X, Sparkles, Shield, Search, Filter } from 'lucide-react';
+import { Play, Download, Music, X, Sparkles, Shield, Search, Filter, AlertCircle } from 'lucide-react';
 import { Resource, SermonAccessLevel } from '../types.ts';
 import { getDriveDirectLink, getEmbedUrl, isDriveLink, formatImageUrl, resourceSupportsInlineAudio, resourceSupportsInlineVideo } from '../store.ts';
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import SermonQandA from '../components/SermonQandA.tsx';
+import { filterResources, getUserClearance, getAccessBadge, SUSPENSION_MESSAGE } from '../utils/accessControl.ts';
 
 const Noise = () => (
   <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] mix-blend-overlay">
@@ -26,25 +27,15 @@ const SermonsPage: React.FC<{ onNavigate: (page: string) => void, store: any }> 
   const [selectedCategory, setSelectedCategory] = useState('All');
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
 
-  const userRole = currentUser?.identityRole;
-  const isLeadership = ['Pastor', 'Apostle', 'Prophet', 'Teacher', 'Evangelist', 'Leader'].includes(userRole || '');
+  const clearance = getUserClearance(currentUser);
+  const isSuspended = clearance === 'none';
 
-  const visibleResources = resources.filter((r: Resource) => {
-    if (currentUser?.sermonAccessSuspended) return false;
-    const level = (r.accessLevel || '').toLowerCase();
-    const isPublic = level.includes('public') || level === 'general public' || level === 'all' || level === '' || level === 'any';
-    const isMemberOnly = level.includes('member');
-    const isLeadershipOnly = level.includes('leadership');
-
-    if (isPublic) return true;
-    if (currentUser && isMemberOnly) return true;
-    if (isLeadership && isLeadershipOnly) return true;
-    return false;
-  }).sort((a: Resource, b: Resource) => {
-    const dateA = new Date(a.date || a.createdAt || 0).getTime();
-    const dateB = new Date(b.date || b.createdAt || 0).getTime();
-    return dateB - dateA;
-  });
+  const visibleResources = filterResources(resources, currentUser)
+    .sort((a: Resource, b: Resource) => {
+      const dateA = new Date(a.date || a.createdAt || 0).getTime();
+      const dateB = new Date(b.date || b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
 
   const filteredResources = visibleResources.filter((r: Resource) => {
     const matchesSearch = (r.title || '').toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -290,12 +281,16 @@ const SermonsPage: React.FC<{ onNavigate: (page: string) => void, store: any }> 
                       <span className="px-5 py-2 bg-white/10 backdrop-blur-xl border border-white/20 text-white text-[8px] font-black uppercase tracking-[0.4em] rounded-full shadow-2xl">
                         {res.category}
                       </span>
-                      {res.accessLevel !== SermonAccessLevel.PUBLIC && (
-                        <span className="px-5 py-2 bg-amber-400 text-indigo-950 text-[8px] font-black uppercase tracking-[0.4em] rounded-full shadow-2xl flex items-center gap-2">
-                          <Shield size={10} />
-                          {res.accessLevel}
-                        </span>
-                      )}
+                      {res.accessLevel !== SermonAccessLevel.PUBLIC && (() => {
+                        const badge = getAccessBadge(res.accessLevel);
+                        return (
+                          <span className="px-5 py-2 text-[8px] font-black uppercase tracking-[0.4em] rounded-full shadow-2xl flex items-center gap-2"
+                                style={{ background: badge.bg, color: badge.color }}>
+                            <Shield size={10} />
+                            {badge.label}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -344,11 +339,23 @@ const SermonsPage: React.FC<{ onNavigate: (page: string) => void, store: any }> 
 
           {filteredResources.length === 0 && (
             <div className="text-center py-40">
-              <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-300">
-                <Search size={40} />
-              </div>
-              <h3 className="text-3xl font-black text-indigo-950 uppercase tracking-tighter mb-4">No Sermons Found</h3>
-              <p className="text-slate-500 font-medium">Try adjusting your search or filters to find what you're looking for.</p>
+              {isSuspended ? (
+                <>
+                  <div className="w-24 h-24 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <AlertCircle size={40} className="text-red-400" />
+                  </div>
+                  <h3 className="text-3xl font-black text-red-700 uppercase tracking-tighter mb-4">Access Suspended</h3>
+                  <p className="text-red-500 font-medium max-w-md mx-auto">{SUSPENSION_MESSAGE}</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-8 text-slate-300">
+                    <Search size={40} />
+                  </div>
+                  <h3 className="text-3xl font-black text-indigo-950 uppercase tracking-tighter mb-4">No Sermons Found</h3>
+                  <p className="text-slate-500 font-medium">Try adjusting your search or filters to find what you're looking for.</p>
+                </>
+              )}
             </div>
           )}
         </div>
