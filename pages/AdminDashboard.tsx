@@ -166,8 +166,6 @@ const AdminDashboard: React.FC<Props> = ({ store, navigate }) => {
     { label: 'Profile Updates', value: users.filter((u: any) => u.profileUpdateRequested).length, icon: AlertCircle, color: 'text-rose-600', bg: 'bg-rose-100', trend: 0 },
   ];
 
-  const isSuperAdmin = currentUser?.workerPermissions?.includes(WorkerPermission.SUPER_ADMIN);
-
   const B = { navy: '#0a1a6b', royal: '#1a3acc', purple: '#7c3aed', off: '#f8faff', text: '#0f172a', muted: '#64748b' };
 
   const mobileStats = [
