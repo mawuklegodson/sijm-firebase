@@ -217,23 +217,11 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
                 )}
               </div>
             ))}
-                <div className="space-y-3 mt-4 text-xs text-gray-500 font-medium border-t border-gray-50 pt-4">
-                  <div className="flex items-center gap-3"><Phone size={12} className="text-indigo-400" /> {ft.phone}</div>
-                  <div className="flex items-center gap-3"><MapPin size={12} className="text-gray-400" /> {ft.location || 'N/A'}</div>
-                  <div className="flex items-center gap-3"><Heart size={12} className="text-rose-400" /> {ft.prayerRequest ? 'Has Prayer Request' : 'No Request'}</div>
-                  <div className="flex items-center gap-3"><MessageCircle size={12} className="text-amber-400" /> {ft.preferredContactMethod}</div>
-                </div>
-                {ft.notes && (
-                  <div className="mt-4 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-400 italic line-clamp-2">
-                    "{ft.notes}"
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
         </div>
       )}
     </div>
   );
+};
 
 export default FirstTimersPage;
