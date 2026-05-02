@@ -284,6 +284,23 @@ export interface LandingPageConfig {
       fontFamily: string;
     };
   };
+  onboardingSlides?: Array<{
+    title: string;
+    body: string;
+    backgroundUrl?: string;
+  }>;
+  quickActionImages?: {
+    give?: string;
+    sermons?: string;
+    events?: string;
+    live?: string;
+    about?: string;
+    books?: string;
+    prayer?: string;
+    checkin?: string;
+    testimonies?: string;
+    declaration?: string;
+  };
   statsCounter?: {
     stat1Label: string; stat1Value: string;
     stat2Label: string; stat2Value: string;

@@ -12,6 +12,15 @@ import { WorkerPermission, SermonAccessLevel } from '../types.ts';
 import WebsiteLayout from '../components/WebsiteLayout.tsx';
 import { useIsMobile } from '../hooks/useIsMobile.ts';
 
+// ─── Smart dashboard routing ──────────────────────────────────
+function getDashboardPage(currentUser: any): string {
+  if (!currentUser) return 'login';
+  const perms: string[] = currentUser.workerPermissions || [];
+  if (perms.includes('Super Admin') || perms.includes('Admin')) return 'dashboard'; // AdminDashboard
+  if (perms.includes('Usher') || perms.includes('Media Team') || perms.includes('Prayer Team') || perms.includes('Prayer Head')) return 'dashboard'; // UsherDashboard
+  return 'dashboard'; // MemberDashboard
+}
+
 const LOGO = '/assets/logo.png';
 
 const B = {
@@ -111,13 +120,15 @@ const MobileHomeFeed: React.FC<{
     return () => clearInterval(t);
   }, [heroItems.length]);
 
+  const qaImages = store?.landingPageConfig?.quickActionImages || {};
+
   const QA = [
-    { id: 'giving',   label: 'Give',      grad: GRADS[0] },
-    { id: 'sermons',  label: 'Sermons',   grad: GRADS[1] },
-    { id: 'events',   label: 'Events',    grad: GRADS[2] },
-    { id: 'live',     label: 'Live',      grad: GRADS[3] },
-    { id: 'about',    label: 'About',     grad: GRADS[4] },
-    { id: 'books',    label: 'Books',     grad: GRADS[5] },
+    { id: 'giving',   label: 'Give',      grad: GRADS[0], img: qaImages.give },
+    { id: 'sermons',  label: 'Sermons',   grad: GRADS[1], img: qaImages.sermons },
+    { id: 'events',   label: 'Events',    grad: GRADS[2], img: qaImages.events },
+    { id: 'live',     label: 'Live',      grad: GRADS[3], img: qaImages.live },
+    { id: 'about',    label: 'About',     grad: GRADS[4], img: qaImages.about },
+    { id: 'books',    label: 'Books',     grad: GRADS[5], img: qaImages.books },
   ];
 
   return (
@@ -135,7 +146,7 @@ const MobileHomeFeed: React.FC<{
           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: B.off }}>
             <Search size={14} style={{ color: B.muted }} />
           </div>
-          <button onClick={() => onNavigate(currentUser ? 'dashboard' : 'login')}
+          <button onClick={() => onNavigate(currentUser ? getDashboardPage(currentUser) : 'login')}
             className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: B.off }}>
             <LogIn size={14} style={{ color: B.muted }} />
           </button>
@@ -258,9 +269,11 @@ const MobileHomeFeed: React.FC<{
               transition={{ delay: i * 0.04 }} whileTap={{ scale: 0.96 }}
               onClick={() => onNavigate(qa.id)}
               className="relative rounded-2xl overflow-hidden h-[80px] flex items-end p-3"
-              style={{ background: qa.grad }}>
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.45) 0%, transparent 60%)' }} />
-              <span className="relative z-10 text-white text-[12px] font-black">{qa.label}</span>
+              style={qa.img
+                ? { backgroundImage: `url(${qa.img})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                : { background: qa.grad }}>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 60%)' }} />
+              <span className="relative z-10 text-white text-[12px] font-black drop-shadow">{qa.label}</span>
             </motion.button>
           ))}
         </div>
@@ -338,7 +351,7 @@ const DesktopHome: React.FC<{
               {tagline}
             </p>
             <div className="flex gap-4">
-              <button onClick={() => onNavigate(currentUser ? 'dashboard' : 'login')}
+              <button onClick={() => onNavigate(currentUser ? getDashboardPage(currentUser) : 'login')}
                 className="flex items-center gap-2 px-8 py-4 rounded-2xl font-black text-[14px] transition-all hover:scale-105"
                 style={{ background: `linear-gradient(135deg, ${B.royal}, ${B.purple})`, color: B.white }}>
                 {currentUser ? 'My Dashboard' : 'Join Us'} <ArrowRight size={16} />
@@ -531,7 +544,7 @@ const DesktopHome: React.FC<{
           </p>
           <div className="flex items-center justify-center gap-4">
             <button
-              onClick={() => onNavigate(currentUser ? 'dashboard' : 'login')}
+              onClick={() => onNavigate(currentUser ? getDashboardPage(currentUser) : 'login')}
               className="flex items-center gap-2 px-10 py-5 rounded-2xl font-black text-[15px] bg-white transition-all hover:scale-105"
               style={{ color: B.navy }}>
               {currentUser ? 'Go to Dashboard' : 'Join SIJM'} <ArrowRight size={18} />

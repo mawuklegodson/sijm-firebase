@@ -93,15 +93,23 @@ const MembersPage: React.FC<Props> = ({ store, navigate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  const [syncError, setSyncError] = useState('');
+
   const handleSaveMember = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setSaveStatus('idle');
+    setSyncError('');
     let success = false;
-    if (selectedMember) {
-      success = await updateMember(selectedMember.id, formData);
-    } else {
-      success = await addMember({ ...formData, membershipDate: new Date().toISOString().split('T')[0] } as Member);
+    try {
+      if (selectedMember) {
+        success = await updateMember(selectedMember.id, formData);
+      } else {
+        success = await addMember({ ...formData, membershipDate: new Date().toISOString().split('T')[0] } as Member);
+      }
+    } catch (err: any) {
+      setSyncError(err?.message || 'Database write failed. Check your connection and Firestore permissions.');
+      success = false;
     }
     setIsSubmitting(false);
     if (success) {
@@ -268,9 +276,13 @@ const MembersPage: React.FC<Props> = ({ store, navigate }) => {
                 </div>
               )}
               {saveStatus === 'error' && (
-                <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3">
-                  <AlertCircle size={20} />
-                  <span className="font-bold text-sm">Sync Failure: Check database connection or permissions.</span>
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-start gap-3">
+                  <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold text-sm">Save failed</p>
+                    <p className="text-xs mt-1 opacity-80">{syncError || 'Check your internet connection and try again. If the problem persists, contact your system administrator.'}</p>
+                    <button onClick={() => setSaveStatus('idle')} className="mt-2 text-xs font-black underline">Dismiss & retry</button>
+                  </div>
                 </div>
               )}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

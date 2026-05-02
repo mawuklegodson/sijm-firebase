@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import GiveModal from '../components/GiveModal.tsx';
 import {
   Radio, Users, Heart, MessageSquare, Send, Youtube, Facebook,
   Eye, Wifi, WifiOff, X, Settings, Save, CheckCircle2,
@@ -447,9 +448,10 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
   const [inputText, setInputText]       = useState('');
   const [prayerText, setPrayerText]     = useState('');
   const [prayerSent, setPrayerSent]     = useState(false);
-  const [giveAmount, setGiveAmount]     = useState<number | null>(null);
-  const [customAmt, setCustomAmt]       = useState('');
-  const [giveDone, setGiveDone]         = useState(false);
+  const [giveAmount, setGiveAmount]         = useState<number | null>(null);
+  const [customAmt, setCustomAmt]           = useState('');
+  const [giveDone, setGiveDone]             = useState(false);
+  const [showLiveGiveModal, setShowLiveGiveModal] = useState(false);
   const [serviceTimer, setServiceTimer] = useState(0);
   const [notifPerm, setNotifPerm]       = useState<NotificationPermission>('default');
   const chatRef = useRef<HTMLDivElement>(null);
@@ -1034,42 +1036,34 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
                       <h3 className="text-white font-black text-[13px] uppercase tracking-widest">Give Online</h3>
                       <p className="text-white/30 text-[10px]">Your offering fuels the mission</p>
                     </div>
+
                     {giveDone ? (
                       <div className="flex-1 flex flex-col items-center justify-center space-y-4">
                         <motion.div animate={{ scale: [0.8, 1.2, 1] }} transition={{ duration: 0.5 }}
                           className="text-4xl">🙌</motion.div>
                         <p className="text-green-400 font-black text-[13px] uppercase tracking-widest">Thank You!</p>
                         <p className="text-white/30 text-[11px] text-center">
-                          Your gift of ₵{giveAmount || customAmt} has been received. God bless you!
+                          Your gift has been received. God bless you!
                         </p>
+                        <button onClick={() => setGiveDone(false)}
+                          className="px-6 py-2 rounded-xl text-[11px] font-black"
+                          style={{ background: B.gold, color: B.navy }}>
+                          Give Again
+                        </button>
                       </div>
                     ) : (
-                      <div className="space-y-4 flex-1">
-                        <p className="text-[9px] font-black text-white/30 uppercase tracking-widest">Amount (GHS ₵)</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          {GIVE_AMOUNTS.map(a => (
-                            <button key={a} onClick={() => { setGiveAmount(a); setCustomAmt(''); }}
-                              className="py-2.5 rounded-xl text-[11px] font-black transition-all"
-                              style={giveAmount === a
-                                ? { background: B.gold, color: B.navy }
-                                : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.5)' }}>
-                              ₵{a}
-                            </button>
-                          ))}
+                      <div className="flex-1 flex flex-col gap-4">
+                        <div className="p-4 rounded-2xl text-center"
+                             style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+                          <p className="text-yellow-300 text-[11px] font-bold">Secure Payment via Paystack & Stripe</p>
+                          <p className="text-white/40 text-[10px] mt-1">Mobile Money · Card · Bank Transfer</p>
                         </div>
-                        <input type="number" value={customAmt}
-                          onChange={e => { setCustomAmt(e.target.value); setGiveAmount(null); }}
-                          placeholder="Or enter custom amount…"
-                          className="w-full rounded-xl px-4 py-3 text-[12px] outline-none placeholder:text-white/20"
-                          style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: B.white }} />
+                        <button onClick={() => setShowLiveGiveModal(true)}
+                          className="w-full py-4 rounded-xl font-black text-[13px] uppercase tracking-widest"
+                          style={{ background: B.gold, color: B.navy }}>
+                          Open Give Portal →
+                        </button>
                       </div>
-                    )}
-                    {!giveDone && (
-                      <button onClick={handleGive}
-                        className="w-full py-4 rounded-xl font-black text-[12px] uppercase tracking-widest shrink-0"
-                        style={{ background: B.gold, color: B.navy }}>
-                        Give ₵{giveAmount || customAmt || '—'} Now
-                      </button>
                     )}
                   </motion.div>
                 )}
@@ -1079,6 +1073,15 @@ const LiveServicePage: React.FC<{ onNavigate: (p: string) => void; store: any }>
           )}
         </div>
       </div>
+      {showLiveGiveModal && (
+        <GiveModal
+          initialCategory="Live Offering"
+          userEmail={currentUser?.email || ''}
+          onClose={() => setShowLiveGiveModal(false)}
+          onSuccess={() => { setShowLiveGiveModal(false); setGiveDone(true); }}
+          store={store}
+        />
+      )}
     </WebsiteLayout>
   );
 };

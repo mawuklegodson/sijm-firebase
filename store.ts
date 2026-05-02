@@ -617,6 +617,35 @@ export const DEFAULT_LANDING_PAGE_CONFIG: LandingPageConfig = {
       fontFamily: 'Inter',
     },
   },
+  onboardingSlides: [
+    {
+      title: 'Welcome to SIJM',
+      body: 'Connecting believers in faith, prayer, and community — wherever you are.',
+      backgroundUrl: '',
+    },
+    {
+      title: 'Ignite Your Spirit Daily',
+      body: 'Daily devotionals, sermons, and Faith Digest to spark your walk with God.',
+      backgroundUrl: '',
+    },
+    {
+      title: 'Worship Without Walls',
+      body: 'Check in to services, give, watch live — all in one place.',
+      backgroundUrl: '',
+    },
+  ],
+  quickActionImages: {
+    give:         'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&q=80',
+    sermons:      'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=400&q=80',
+    events:       'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&q=80',
+    live:         'https://images.unsplash.com/photo-1494522358652-f30e61a60313?w=400&q=80',
+    about:        'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&q=80',
+    books:        'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80',
+    prayer:       'https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=400&q=80',
+    checkin:      'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=400&q=80',
+    testimonies:  'https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=400&q=80',
+    declaration:  'https://images.unsplash.com/photo-1473177027534-53d906e9abcf?w=400&q=80',
+  },
   sections: [],
   seo: {
     title: 'SIJM - Salvation In Jesus Ministry',
@@ -1719,25 +1748,98 @@ export function useCMSStore() {
       }
     },
     updateProfile: async (id: string, data: any) => {
-      if (isMockMode) return;
-      await updateDoc(doc(db, 'profiles', id), {
-        full_name: data.fullName,
-        phone: data.phone,
-        branch: data.branch,
-        profile_update_requested: false
-      });
+      if (isMockMode) {
+        setUsers(prev => prev.map(u => u.id === id ? { ...u, ...data, profileUpdateRequested: false } : u));
+        setMembers(prev => prev.map(m => m.id === id ? { ...m, ...data, profileUpdateRequested: false } : m));
+        return true;
+      }
       try {
-        await updateDoc(doc(db, 'members', id), {
-          full_name: data.fullName,
-          phone: data.phone,
-          branch: data.branch,
-          birthday: data.birthday,
-          location: data.location,
-          gender: data.gender,
-          profile_update_requested: false
+        const profileFields: any = {
+          full_name: data.fullName || '',
+          fullName: data.fullName || '',
+          phone: data.phone || '',
+          branch: data.branch || '',
+          birthday: data.birthday || '',
+          location: data.location || '',
+          gender: data.gender || '',
+          email: data.email || '',
+          occupation: data.occupation || '',
+          profile_update_requested: false,
+          profileUpdateRequested: false,
+          updatedAt: new Date().toISOString(),
+        };
+        await updateDoc(doc(db, 'profiles', id), profileFields);
+        // Sync to members collection
+        try {
+          const memberRef = doc(db, 'members', id);
+          const memberSnap = await getDoc(memberRef);
+          if (memberSnap.exists()) {
+            await updateDoc(memberRef, {
+              full_name: data.fullName || '',
+              fullName: data.fullName || '',
+              phone: data.phone || '',
+              branch: data.branch || '',
+              birthday: data.birthday || '',
+              location: data.location || '',
+              gender: data.gender || '',
+              email: data.email || '',
+              occupation: data.occupation || '',
+              profile_update_requested: false,
+              profileUpdateRequested: false,
+              updatedAt: new Date().toISOString(),
+            });
+          }
+        } catch (e) {
+          // Member record may not exist — that is OK
+        }
+        // Update local state immediately
+        setUsers(prev => prev.map(u => u.id === id ? {
+          ...u, ...data, fullName: data.fullName || u.fullName,
+          profileUpdateRequested: false
+        } : u));
+        return true;
+      } catch (err: any) {
+        console.error('[SIJM] updateProfile error:', err);
+        throw err;
+      }
+    },
+    updateFirstTimer: async (id: string, data: any) => {
+      if (isMockMode) {
+        setFirstTimers(prev => prev.map(f => f.id === id ? { ...f, ...data } : f));
+        return true;
+      }
+      try {
+        await updateDoc(doc(db, 'first_timers', id), {
+          full_name: data.fullName || '',
+          fullName: data.fullName || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          gender: data.gender || '',
+          age_group: data.ageGroup || '',
+          ageGroup: data.ageGroup || '',
+          source: data.source || '',
+          invited_by: data.invitedBy || '',
+          invitedBy: data.invitedBy || '',
+          visit_date: data.visitDate || '',
+          visitDate: data.visitDate || '',
+          location: data.location || '',
+          notes: data.notes || '',
+          occupation: data.occupation || '',
+          marital_status: data.maritalStatus || '',
+          maritalStatus: data.maritalStatus || '',
+          prayer_request: data.prayerRequest || '',
+          prayerRequest: data.prayerRequest || '',
+          preferred_contact_method: data.preferredContactMethod || '',
+          preferredContactMethod: data.preferredContactMethod || '',
+          follow_up_status: data.followUpStatus || '',
+          followUpStatus: data.followUpStatus || '',
+          updatedAt: new Date().toISOString(),
         });
-      } catch (e) {
-        // Member record might not exist with same ID
+        setFirstTimers(prev => prev.map(f => f.id === id ? { ...f, ...data } : f));
+        return true;
+      } catch (err: any) {
+        console.error('[SIJM] updateFirstTimer error:', err);
+        return false;
       }
     },
     deleteUser: async (id: string) => {

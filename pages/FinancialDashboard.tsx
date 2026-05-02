@@ -10,7 +10,6 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar 
 } from 'recharts';
 import { Order, Donation, BookstoreConfig } from '../types.ts';
-import AdminLayout from '../components/AdminLayout.tsx';
 
 interface FinancialDashboardProps {
   store: any;
@@ -65,15 +64,7 @@ const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ store, currentU
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      <AdminLayout 
-        store={store} 
-        currentUser={currentUser} 
-        onLogout={onLogout} 
-        currentPage="financials" 
-        setCurrentPage={navigate}
-      >
-        <div className="p-8 max-w-[1600px] mx-auto space-y-8">
+    <div className="p-4 lg:p-8 max-w-[1600px] mx-auto space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
@@ -435,8 +426,6 @@ const FinancialDashboard: React.FC<FinancialDashboardProps> = ({ store, currentU
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
-      </AdminLayout>
     </div>
   );
 };

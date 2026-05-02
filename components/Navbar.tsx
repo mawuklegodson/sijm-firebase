@@ -1,10 +1,21 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence, useScroll } from 'motion/react';
-import { Home, Info, Music, Calendar, Heart, LogOut, User, Menu, X, BookOpen, Radio } from 'lucide-react';
+import { Home, Info, Music, Calendar, Heart, LogOut, User, Menu, X, BookOpen, Radio, LayoutDashboard } from 'lucide-react';
 import { formatImageUrl } from '../store.ts';
+import { WorkerPermission } from '../types.ts';
 
 const logoImg = '/assets/logo.png';
+
+// Smart dashboard routing based on user role
+function getDashboardPage(currentUser: any): string {
+  if (!currentUser) return 'login';
+  const perms: string[] = currentUser.workerPermissions || [];
+  if (perms.includes(WorkerPermission.SUPER_ADMIN) || perms.includes(WorkerPermission.ADMIN)) return 'dashboard';
+  if ([WorkerPermission.USHER, WorkerPermission.MEDIA_TEAM, WorkerPermission.PRAYER_TEAM,
+       WorkerPermission.PRAYER_HEAD].some(p => perms.includes(p))) return 'dashboard';
+  return 'dashboard'; // MemberDashboard (App.tsx routes all to 'dashboard', layout decides)
+}
 
 const Noise = () => (
   <div className="fixed inset-0 pointer-events-none z-[9999] opacity-[0.03] mix-blend-overlay">
@@ -106,8 +117,15 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, store, currentPage }) => {
         </button>
         <div className="h-4 w-[1px] bg-white/10 mx-2" />
         {currentUser ? (
-          <div className="flex items-center gap-6 bg-white/5 pl-6 pr-2 py-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
-            <div className="flex flex-col items-end">
+          <div className="flex items-center gap-3 bg-white/5 pl-4 pr-2 py-1.5 rounded-2xl border border-white/10 backdrop-blur-md">
+            <button
+              onClick={() => onNavigate(getDashboardPage(currentUser))}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-amber-400 hover:bg-amber-400/10 transition-all text-[8px] font-black uppercase tracking-widest"
+            >
+              <LayoutDashboard size={13} />
+              My Dashboard
+            </button>
+            <div className="flex flex-col items-start">
               <span className="text-amber-400 font-black text-[8px] tracking-widest">{currentUser.identityRole}</span>
               <span className="text-white/40 text-[7px] lowercase font-medium">{currentUser.fullName.split(' ')[0]}</span>
             </div>
@@ -236,10 +254,14 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, store, currentPage }) => {
                         </div>
                       </div>
                       <button
-                        onClick={() => {
-                          store.logout();
-                          setIsMenuOpen(false);
-                        }}
+                        onClick={() => { onNavigate(getDashboardPage(currentUser)); setIsMenuOpen(false); }}
+                        className="w-full flex items-center gap-5 px-4 py-3 rounded-2xl text-amber-400 hover:bg-amber-400/10 transition-all"
+                      >
+                        <LayoutDashboard size={20} />
+                        <span className="text-xs font-black uppercase tracking-[0.2em]">My Dashboard</span>
+                      </button>
+                      <button
+                        onClick={() => { store.logout(); setIsMenuOpen(false); }}
                         className="w-full flex items-center gap-5 px-4 py-3 rounded-2xl text-rose-500 hover:bg-rose-500/10 transition-all"
                       >
                         <LogOut size={20} />

@@ -2,14 +2,17 @@
 import React, { useState } from 'react';
 import { FIRST_TIMER_SOURCES } from '../constants.tsx';
 import { Gender, AgeGroup, FirstTimer } from '../types.ts';
-import { UserPlus, List, Phone, Mail, Search, CheckCircle2, X, MapPin, Calendar, Heart, User, ChevronRight, MessageCircle, Clock, Info, ExternalLink, Users, Compass, Loader2, AlertCircle } from 'lucide-react';
+import { UserPlus, List, Phone, Mail, Search, CheckCircle2, X, MapPin, Calendar, Heart, User, ChevronRight, MessageCircle, Clock, Info, ExternalLink, Users, Compass, Loader2, AlertCircle, Edit3 } from 'lucide-react';
 
 interface Props { store: any; navigate: (page: string) => void; }
 
 const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
   const ui = store.settings.uiText;
   const { firstTimers, addFirstTimer, currentUser } = store;
-  const [view, setView] = useState<'list' | 'add'>('list');
+  const updateFirstTimer = store.updateFirstTimer;
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState('');
+  const [view, setView] = useState<'list' | 'add' | 'edit'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -34,20 +37,54 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
     e.preventDefault();
     setIsSyncing(true);
     setStatus('idle');
-    const success = await addFirstTimer({ ...formData, followUpStatus: 'Not Contacted' });
-    setIsSyncing(false);
-    if (success) {
-      setStatus('success');
-      setTimeout(() => { 
-        setStatus('idle'); 
-        setView('list'); 
-        setFormData({ 
-          fullName: '', phone: '', email: '', gender: Gender.MALE, ageGroup: AgeGroup.ADULT, 
-          source: FIRST_TIMER_SOURCES[0], invitedBy: '', visitDate: new Date().toISOString().split('T')[0], 
-          location: '', notes: '', occupation: '', maritalStatus: 'Single', prayerRequest: '', preferredContactMethod: 'Phone Call' 
-        }); 
-      }, 2000);
-    } else { setStatus('error'); }
+    setSyncError('');
+    try {
+      let success = false;
+      if (view === 'edit' && editingId) {
+        success = await updateFirstTimer(editingId, { ...formData });
+      } else {
+        success = await addFirstTimer({ ...formData, followUpStatus: 'Not Contacted' });
+      }
+      setIsSyncing(false);
+      if (success) {
+        setStatus('success');
+        setTimeout(() => {
+          setStatus('idle');
+          setView('list');
+          setEditingId(null);
+          setFormData({
+            fullName: '', phone: '', email: '', gender: Gender.MALE, ageGroup: AgeGroup.ADULT,
+            source: FIRST_TIMER_SOURCES[0], invitedBy: '', visitDate: new Date().toISOString().split('T')[0],
+            location: '', notes: '', occupation: '', maritalStatus: 'Single', prayerRequest: '', preferredContactMethod: 'Phone Call'
+          });
+        }, 2000);
+      } else { setStatus('error'); setSyncError('Save failed. Please check your connection and try again.'); }
+    } catch (err: any) {
+      setIsSyncing(false);
+      setStatus('error');
+      setSyncError(err?.message || 'Database write failed. Check connection and permissions.');
+    }
+  };
+
+  const handleEdit = (ft: FirstTimer) => {
+    setFormData({
+      fullName: ft.fullName || '',
+      phone: ft.phone || '',
+      email: ft.email || '',
+      gender: (ft.gender as Gender) || Gender.MALE,
+      ageGroup: (ft.ageGroup as AgeGroup) || AgeGroup.ADULT,
+      source: ft.source || FIRST_TIMER_SOURCES[0],
+      invitedBy: ft.invitedBy || '',
+      visitDate: ft.visitDate || new Date().toISOString().split('T')[0],
+      location: ft.location || '',
+      notes: ft.notes || '',
+      occupation: (ft as any).occupation || '',
+      maritalStatus: (ft as any).maritalStatus || 'Single',
+      prayerRequest: (ft as any).prayerRequest || '',
+      preferredContactMethod: (ft as any).preferredContactMethod || 'Phone Call',
+    });
+    setEditingId(ft.id);
+    setView('edit');
   };
 
   const filteredFirstTimers = firstTimers.filter((ft: FirstTimer) => (ft.fullName || '').toLowerCase().includes(searchQuery.toLowerCase()) || (ft.phone || '').includes(searchQuery));
@@ -69,12 +106,12 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
           </div>
         </div>
         <div className="flex items-center gap-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
-          <button onClick={() => setView('list')} className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all ${view === 'list' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-indigo-600'}`}><List size={14} />Registry</button>
-          <button onClick={() => setView('add')} className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all ${view === 'add' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-indigo-600'}`}><UserPlus size={14} />Enlist</button>
+          <button onClick={() => { setView('list'); setEditingId(null); }} className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all ${view === 'list' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-indigo-600'}`}><List size={14} />Registry</button>
+          <button onClick={() => { setView('add'); setEditingId(null); setFormData({ fullName: '', phone: '', email: '', gender: Gender.MALE, ageGroup: AgeGroup.ADULT, source: FIRST_TIMER_SOURCES[0], invitedBy: '', visitDate: new Date().toISOString().split('T')[0], location: '', notes: '', occupation: '', maritalStatus: 'Single', prayerRequest: '', preferredContactMethod: 'Phone Call' }); }} className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-all ${view === 'add' || view === 'edit' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-400 hover:text-indigo-600'}`}><UserPlus size={14} />{view === 'edit' ? 'Editing' : 'Enlist'}</button>
         </div>
       </div>
 
-      {view === 'add' ? (
+      {(view === 'add' || view === 'edit') ? (
         <div className="space-y-4">
           <div className="max-w-4xl mx-auto">
             <button 
@@ -87,12 +124,23 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
           </div>
           <div className="max-w-4xl mx-auto bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200 mb-20">
           <div className="bg-indigo-900 p-8 text-white flex items-center justify-between">
-            <div><h3 className="text-xl font-bold font-poppins">Soul Registration</h3><p className="text-indigo-200 text-xs">Capturing entry data for pastoral follow-up</p></div>
-            <UserPlus size={48} className="opacity-20" />
+            <div>
+              <h3 className="text-xl font-bold font-poppins">{view === 'edit' ? 'Edit Visitor Record' : 'Soul Registration'}</h3>
+              <p className="text-indigo-200 text-xs">{view === 'edit' ? `Updating entry for ${formData.fullName}` : 'Capturing entry data for pastoral follow-up'}</p>
+            </div>
+            {view === 'edit' ? <Edit3 size={48} className="opacity-20" /> : <UserPlus size={48} className="opacity-20" />}
           </div>
           <form onSubmit={handleSubmit} className="p-8 space-y-8">
-            {status === 'success' && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 animate-bounce"><CheckCircle2 size={20} /><span className="font-bold text-sm">Visitor successfully logged!</span></div>}
-            {status === 'error' && <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3"><AlertCircle size={20} /><span className="font-bold text-sm">Sync Failure: Check database connection.</span></div>}
+            {status === 'success' && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 animate-bounce"><CheckCircle2 size={20} /><span className="font-bold text-sm">{view === 'edit' ? 'Record updated successfully!' : 'Visitor successfully logged!'}</span></div>}
+            {status === 'error' && (
+              <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-start gap-3">
+                <AlertCircle size={20} className="shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold text-sm">Save Failed</p>
+                  <p className="text-xs mt-1 opacity-80">{syncError || 'Check your connection and try again.'}</p>
+                </div>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-1"><label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Full Name</label><input type="text" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold" placeholder="e.g. John Doe" /></div>
@@ -125,8 +173,8 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
             <div className="flex gap-4">
                <button type="button" onClick={() => setView('list')} className="flex-1 py-4 text-sm font-black uppercase text-gray-400 hover:bg-gray-50 rounded-2xl transition-all">Cancel</button>
                <button type="submit" disabled={isSyncing} className={`flex-[2] py-4 rounded-2xl font-bold shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 ${isSyncing ? 'bg-gray-400 text-white' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
-                 {isSyncing ? <Loader2 className="animate-spin" /> : <UserPlus size={18} />}
-                 {isSyncing ? 'Synchronizing...' : 'Register Soul'}
+                 {isSyncing ? <Loader2 className="animate-spin" /> : view === 'edit' ? <Edit3 size={18} /> : <UserPlus size={18} />}
+                 {isSyncing ? 'Saving...' : view === 'edit' ? 'Save Changes' : 'Register Soul'}
                </button>
             </div>
           </form>
@@ -149,7 +197,26 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
                       <p className="text-[10px] font-black uppercase text-gray-400 tracking-widest mt-1">{ft.ageGroup}</p>
                     </div>
                   </div>
+                  <button
+                    onClick={() => handleEdit(ft)}
+                    className="w-9 h-9 rounded-xl flex items-center justify-center bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all"
+                    title="Edit first timer">
+                    <Edit3 size={14} />
+                  </button>
                 </div>
+                <div className="space-y-3 mt-4 text-xs text-gray-500 font-medium border-t border-gray-50 pt-4">
+                  <div className="flex items-center gap-3"><Phone size={12} className="text-indigo-400" /> {ft.phone}</div>
+                  <div className="flex items-center gap-3"><MapPin size={12} className="text-gray-400" /> {ft.location || 'N/A'}</div>
+                  <div className="flex items-center gap-3"><Heart size={12} className="text-rose-400" /> {ft.prayerRequest ? 'Has Prayer Request' : 'No Request'}</div>
+                  <div className="flex items-center gap-3"><MessageCircle size={12} className="text-amber-400" /> {ft.preferredContactMethod}</div>
+                </div>
+                {ft.notes && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-xl text-[10px] text-gray-400 italic line-clamp-2">
+                    "{ft.notes}"
+                  </div>
+                )}
+              </div>
+            ))}
                 <div className="space-y-3 mt-4 text-xs text-gray-500 font-medium border-t border-gray-50 pt-4">
                   <div className="flex items-center gap-3"><Phone size={12} className="text-indigo-400" /> {ft.phone}</div>
                   <div className="flex items-center gap-3"><MapPin size={12} className="text-gray-400" /> {ft.location || 'N/A'}</div>
@@ -168,6 +235,5 @@ const FirstTimersPage: React.FC<Props> = ({ store, navigate }) => {
       )}
     </div>
   );
-};
 
 export default FirstTimersPage;

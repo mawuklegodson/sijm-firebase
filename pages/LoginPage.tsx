@@ -278,37 +278,63 @@ const LoginPage: React.FC<Props> = ({ onLogin, store, onBack }) => {
   const branding = store?.settings?.branding || DEFAULT_SETTINGS.branding;
   const general  = store?.settings?.general  || DEFAULT_SETTINGS.general;
 
+  // Pull onboarding slides from landingPageConfig if available, else use defaults
+  const configSlides = store?.landingPageConfig?.onboardingSlides;
+  const slides = (configSlides?.length ? configSlides : SLIDES).map((s: any, i: number) => ({
+    title: s.title || SLIDES[i % SLIDES.length].title,
+    body:  s.body  || SLIDES[i % SLIDES.length].body,
+    bg:    s.backgroundUrl
+      ? `url(${s.backgroundUrl}) center/cover no-repeat`
+      : SLIDES[i % SLIDES.length].bg,
+  }));
+
   const [slide,  setSlide]  = useState(0);
   const [method, setMethod] = useState<'none' | 'email' | 'google'>('none');
-  const [started, setStarted] = useState(false);
 
   // Auto-advance slides
   React.useEffect(() => {
     if (method !== 'none') return;
-    const t = setInterval(() => setSlide(s => (s + 1) % SLIDES.length), 4000);
+    const t = setInterval(() => setSlide(s => (s + 1) % slides.length), 4000);
     return () => clearInterval(t);
-  }, [method]);
+  }, [method, slides.length]);
 
-  const currentSlide = SLIDES[slide];
+  const currentSlide = slides[slide];
   const logoSrc = branding?.logoUrl ? formatImageUrl(branding.logoUrl) : null;
   const churchName = general?.churchName || 'Salvation In Jesus Ministry';
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: currentSlide.bg, transition: 'background 0.8s ease' }}>
+    <div className="min-h-screen flex flex-col relative overflow-hidden"
+         style={{ background: currentSlide.bg.startsWith('url') ? undefined : currentSlide.bg,
+                  transition: 'background 0.8s ease' }}>
 
-      {/* Background orbs */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-10 bg-white" />
-        <div className="absolute -bottom-20 -left-20 w-60 h-60 rounded-full opacity-10 bg-white" />
-      </div>
+      {/* Background image layer */}
+      {currentSlide.bg.startsWith('url') && (
+        <>
+          <div className="fixed inset-0 z-0"
+               style={{ backgroundImage: currentSlide.bg, backgroundSize: 'cover', backgroundPosition: 'center',
+                        transition: 'opacity 0.8s ease' }} />
+          <div className="fixed inset-0 z-0"
+               style={{ background: `linear-gradient(160deg, ${B.navy}cc 0%, ${B.royal}aa 60%, ${B.purple}99 100%)` }} />
+        </>
+      )}
+
+      {/* Background orbs (no image) */}
+      {!currentSlide.bg.startsWith('url') && (
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full opacity-10 bg-white" />
+          <div className="absolute -bottom-20 -left-20 w-60 h-60 rounded-full opacity-10 bg-white" />
+        </div>
+      )}
 
       {/* Hero area */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 py-12 relative z-10">
-        {/* Logo */}
+        {/* Logo — perfectly fitted */}
         <motion.div key="logo" initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-          className="w-20 h-20 rounded-full bg-white/15 border-2 border-white/30 flex items-center justify-center mb-6 overflow-hidden">
+          className="w-20 h-20 rounded-full bg-white flex items-center justify-center mb-6 overflow-hidden shadow-2xl"
+          style={{ border: '3px solid rgba(255,255,255,0.4)' }}>
           {logoSrc
-            ? <img src={logoSrc} alt="Logo" className="w-14 h-14 object-contain" onError={e => { (e.target as HTMLImageElement).src = LOGO; }} />
+            ? <img src={logoSrc} alt="Logo" className="w-[90%] h-[90%] object-contain"
+                   onError={e => { (e.target as HTMLImageElement).src = LOGO; }} />
             : <span style={{ color: B.royal, fontSize: 28, fontWeight: 900 }}>✝</span>
           }
         </motion.div>
@@ -326,7 +352,7 @@ const LoginPage: React.FC<Props> = ({ onLogin, store, onBack }) => {
 
         {/* Dots */}
         <div className="flex gap-2 mt-6">
-          {SLIDES.map((_, i) => (
+          {slides.map((_, i) => (
             <button key={i} onClick={() => setSlide(i)}
               className="transition-all rounded-full"
               style={{

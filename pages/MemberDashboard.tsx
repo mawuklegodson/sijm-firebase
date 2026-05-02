@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Gender, IdentityRole, WorkerPermission, SermonAccessLevel } from '../types';
 import { filterResources, canAccessResource, getUserClearance, getAccessBadge, SUSPENSION_MESSAGE } from '../utils/accessControl.ts';
+import GiveModal from '../components/GiveModal.tsx';
 import {
   Play, Download, BookOpen, Music, Calendar, Heart,
   User as UserIcon, MapPin, Phone, Cake, Save, X,
@@ -485,53 +486,13 @@ const FaithDigestPage: React.FC<{ resources: any[]; onClose: () => void }> = ({ 
   );
 };
 
-// ─── Give Tab ─────────────────────────────────────────────────
+// ─── Give Tab — uses GiveModal (Paystack + Stripe) ───────────
 const GiveTab: React.FC<{ store: any }> = ({ store }) => {
-  const [category, setCategory] = useState('Tithes');
-  const [amount, setAmount] = useState('');
-  const [name, setName] = useState(store.currentUser?.fullName || '');
-  const [email, setEmail] = useState(store.currentUser?.email || '');
-  const [payMethod, setPayMethod] = useState<'momo' | 'paystack'>('momo');
-  const [confirm, setConfirm] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [category, setCategory] = useState('Tithes & Offerings');
   const [done, setDone] = useState(false);
 
-  const cats = ['Tithes', 'Offering', 'Missions', 'Building Fund', 'Special Seed'];
-  const methods = [
-    { id: 'momo',     label: 'Mobile Money',    desc: 'MTN MoMo · VodaCash · AirtelTigo' },
-    { id: 'paystack', label: 'Card / Paystack',  desc: 'Visa · Mastercard · Bank Transfer' },
-  ] as const;
-
-  const handleConfirm = async () => {
-    if (!amount || parseFloat(amount) <= 0) return;
-    setProcessing(true);
-    try {
-      await store.addDonation?.({
-        category,
-        amount: parseFloat(amount),
-        donorName: name,
-        donorEmail: email,
-        currency: 'GHS',
-        paymentMethod: payMethod,
-      });
-      setDone(true);
-      setConfirm(false);
-      setTimeout(() => { setDone(false); setAmount(''); }, 3000);
-    } catch (e) { console.error(e); }
-    finally { setProcessing(false); }
-  };
-
-  if (done) return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] px-8 text-center">
-      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', bounce: 0.5 }}
-        className="w-20 h-20 rounded-full flex items-center justify-center mb-4"
-        style={{ background: `linear-gradient(135deg, ${B.royal}, ${B.purple})` }}>
-        <CheckCircle size={36} className="text-white" />
-      </motion.div>
-      <h2 className="font-black text-[20px] mb-2" style={{ color: B.text }}>Thank You!</h2>
-      <p className="text-[13px]" style={{ color: B.textMuted }}>Your gift of ₵{parseFloat(amount).toFixed(2)} has been received.</p>
-    </div>
-  );
+  const cats = ['Tithes & Offerings', 'Missions & Outreach', 'Building Project', 'Special Seed'];
 
   return (
     <div className="flex flex-col min-h-screen" style={{ background: B.offWhite }}>
@@ -539,101 +500,64 @@ const GiveTab: React.FC<{ store: any }> = ({ store }) => {
       <div className="px-4 pt-10 pb-14 text-center"
            style={{ background: `linear-gradient(160deg, ${B.navy} 0%, ${B.royal} 65%, ${B.purple} 100%)` }}>
         <p className="text-[11px] font-bold uppercase tracking-widest text-white/60 mb-2">Give to SIJM</p>
-        <div className="flex items-start justify-center gap-1">
-          <span className="text-[22px] text-white/70 font-black mt-2">₵</span>
-          <input type="number" value={amount} onChange={e => setAmount(e.target.value)}
-            placeholder="0.00"
-            className="text-[52px] font-black text-white bg-transparent border-none outline-none w-full max-w-[200px] text-center placeholder:text-white/25"
-            style={{ fontFamily: 'inherit' }} />
-        </div>
-        <p className="text-[12px] text-white/60">{category} ▾</p>
+        <div className="text-[52px] font-black text-white leading-none mb-1">₵</div>
+        <p className="text-white/60 text-[12px]">{category}</p>
       </div>
 
-      {/* Card */}
-      <div className="mx-4 -mt-7 bg-white rounded-2xl border border-slate-100 p-4 mb-4"
-           style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
-        {/* Categories */}
-        <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: B.textMuted }}>Give Towards</p>
-        <div className="flex gap-2 flex-wrap mb-4">
-          {cats.map(cat => (
-            <button key={cat} onClick={() => setCategory(cat)}
-              className="px-3 py-1.5 rounded-full text-[11px] font-black transition-all"
-              style={cat === category
-                ? { background: B.royal, color: B.white }
-                : { background: B.bluePale, color: B.royal }}>
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Personal info */}
-        <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: B.textMuted }}>Your Details</p>
-        {[
-          { icon: UserIcon, val: name,  set: setName,  type: 'text',  ph: 'Full Name' },
-          { icon: Mail,     val: email, set: setEmail, type: 'email', ph: 'Email Address' },
-        ].map(f => (
-          <div key={f.ph} className="flex items-center gap-3 rounded-xl px-3 py-3 mb-2 border"
-               style={{ background: B.offWhite, borderColor: '#e2e8f0' }}>
-            <f.icon size={14} style={{ color: B.gray }} />
-            <input type={f.type} value={f.val} onChange={e => f.set(e.target.value)}
-              placeholder={f.ph}
-              className="flex-1 bg-transparent outline-none text-[13px] font-semibold placeholder:text-slate-300"
-              style={{ color: B.text }} />
-          </div>
-        ))}
-
-        {/* Payment methods */}
-        <p className="text-[10px] font-black uppercase tracking-widest mt-3 mb-1" style={{ color: B.textMuted }}>Pay With</p>
-        {methods.map((pm, i) => (
-          <button key={pm.id} onClick={() => setPayMethod(pm.id as any)}
-            className="w-full flex items-center justify-between py-3 border-t"
-            style={{ borderColor: i === 0 ? 'transparent' : '#f1f5f9' }}>
-            <div className="text-left">
-              <p className="text-[13px] font-black" style={{ color: B.text }}>{pm.label}</p>
-              <p className="text-[10px]" style={{ color: B.textMuted }}>{pm.desc}</p>
-            </div>
-            <div className="w-5 h-5 rounded-full flex items-center justify-center"
-                 style={{ background: payMethod === pm.id ? B.royal : 'transparent', border: `2px solid ${payMethod === pm.id ? B.royal : '#e2e8f0'}` }}>
-              {payMethod === pm.id && <CheckCircle size={11} className="text-white" />}
-            </div>
+      {done ? (
+        <div className="flex flex-col items-center justify-center py-20 px-8 text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}
+            transition={{ type: 'spring', bounce: 0.5 }}
+            className="text-5xl mb-4">🙌</motion.div>
+          <h2 className="font-black text-[20px] mb-2" style={{ color: B.text }}>Thank You!</h2>
+          <p className="text-[13px]" style={{ color: B.textMuted }}>Your gift has been received. God bless you!</p>
+          <button onClick={() => setDone(false)} className="mt-6 px-8 py-3 rounded-full text-white font-black text-[13px]"
+            style={{ background: `linear-gradient(135deg, ${B.royal}, ${B.purple})` }}>
+            Give Again
           </button>
-        ))}
-      </div>
-
-      <button onClick={() => setConfirm(true)}
-        className="mx-4 py-4 rounded-full text-white text-[15px] font-black"
-        style={{ background: `linear-gradient(135deg, ${B.royal}, ${B.purple})` }}>
-        Give Now →
-      </button>
-      <p className="text-center text-[10px] mt-3 mb-6" style={{ color: B.textMuted }}>
-        Secure & encrypted. All transactions protected.
-      </p>
-
-      {/* Confirm sheet */}
-      <AnimatePresence>
-        {confirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/50 flex items-end" onClick={() => setConfirm(false)}>
-            <motion.div initial={{ y: 100 }} animate={{ y: 0 }} exit={{ y: 100 }}
-              className="bg-white w-full rounded-t-3xl p-6" onClick={e => e.stopPropagation()}>
-              <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-4" />
-              <h3 className="font-black text-[16px] text-center mb-1" style={{ color: B.text }}>Confirm Gift</h3>
-              <p className="text-center text-[13px] mb-5" style={{ color: B.textMuted }}>
-                ₵{parseFloat(amount || '0').toFixed(2)} — {category}
-              </p>
-              <button onClick={handleConfirm} disabled={processing}
-                className="w-full py-4 rounded-2xl text-white font-black text-[15px] mb-3 flex items-center justify-center gap-2"
-                style={{ background: processing ? '#94a3b8' : `linear-gradient(135deg, ${B.royal}, ${B.purple})` }}>
-                {processing ? <><Loader2 size={16} className="animate-spin" /> Processing…</> : 'Confirm & Pay'}
+        </div>
+      ) : (
+        <div className="mx-4 -mt-7 bg-white rounded-2xl border border-slate-100 p-4 mb-4"
+             style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.07)' }}>
+          <p className="text-[10px] font-black uppercase tracking-widest mb-2" style={{ color: B.textMuted }}>Give Towards</p>
+          <div className="flex gap-2 flex-wrap mb-5">
+            {cats.map(cat => (
+              <button key={cat} onClick={() => setCategory(cat)}
+                className="px-3 py-1.5 rounded-full text-[11px] font-black transition-all"
+                style={cat === category
+                  ? { background: B.royal, color: B.white }
+                  : { background: B.bluePale, color: B.royal }}>
+                {cat}
               </button>
-              <button onClick={() => setConfirm(false)}
-                className="w-full py-3 text-[13px] font-bold" style={{ color: B.textMuted }}>
-                Cancel
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            ))}
+          </div>
+
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 mb-4 text-center">
+            <p className="text-[12px] font-bold text-blue-800 mb-1">Secure Payment Processing</p>
+            <p className="text-[11px] text-blue-600">Powered by Paystack & Stripe — Mobile Money, Card, Bank Transfer</p>
+          </div>
+
+          <button onClick={() => setModalOpen(true)}
+            className="w-full py-4 rounded-full text-white text-[15px] font-black"
+            style={{ background: `linear-gradient(135deg, ${B.royal}, ${B.purple})` }}>
+            Proceed to Give →
+          </button>
+          <p className="text-center text-[10px] mt-3" style={{ color: B.textMuted }}>
+            Secure & encrypted. All transactions protected.
+          </p>
+        </div>
+      )}
+
+      {/* GiveModal with full Paystack/Stripe integration */}
+      {modalOpen && (
+        <GiveModal
+          initialCategory={category}
+          userEmail={store.currentUser?.email || ''}
+          onClose={() => setModalOpen(false)}
+          onSuccess={() => { setModalOpen(false); setDone(true); }}
+          store={store}
+        />
+      )}
     </div>
   );
 };
@@ -732,32 +656,40 @@ const MoreTabPage: React.FC<{
 const ProfileModal: React.FC<{ store: any; onClose: () => void }> = ({ store, onClose }) => {
   const { currentUser, updateProfile } = store;
   const [form, setForm] = useState({
-    fullName: currentUser?.fullName || '',
-    phone:    currentUser?.phone    || '',
-    branch:   currentUser?.branch   || '',
-    birthday: currentUser?.birthday || '',
-    location: currentUser?.location || '',
-    gender:   (currentUser?.gender  || Gender.MALE) as Gender,
+    fullName:   currentUser?.fullName   || '',
+    phone:      currentUser?.phone      || '',
+    email:      currentUser?.email      || '',
+    branch:     currentUser?.branch     || '',
+    birthday:   currentUser?.birthday   || '',
+    location:   currentUser?.location   || '',
+    occupation: currentUser?.occupation || '',
+    gender:     (currentUser?.gender    || Gender.MALE) as Gender,
   });
-  const [saving, setSaving] = useState(false);
-  const [saved,  setSaved]  = useState(false);
+  const [saving,     setSaving]     = useState(false);
+  const [saved,      setSaved]      = useState(false);
+  const [saveError,  setSaveError]  = useState('');
 
   const submit = async () => {
+    if (!form.fullName.trim()) { setSaveError('Full name is required.'); return; }
     setSaving(true);
+    setSaveError('');
     try {
       await updateProfile(currentUser.id, form);
       setSaved(true);
-      setTimeout(onClose, 1400);
-    } catch (e) { console.error(e); }
-    finally { setSaving(false); }
+      setTimeout(onClose, 1600);
+    } catch (e: any) {
+      setSaveError(e?.message || 'Save failed. Please check your connection and try again.');
+    } finally { setSaving(false); }
   };
 
   const fields = [
-    { key: 'fullName', label: 'Full Name', type: 'text',  ph: 'Your full name',      Icon: UserIcon },
-    { key: 'phone',    label: 'Phone',     type: 'tel',   ph: '+233 800 000 000',    Icon: Phone    },
-    { key: 'branch',   label: 'Branch',    type: 'text',  ph: 'e.g. Main Sanctuary', Icon: Globe    },
-    { key: 'birthday', label: 'Birthday',  type: 'date',  ph: '',                    Icon: Cake     },
-    { key: 'location', label: 'Location',  type: 'text',  ph: 'Residential area',    Icon: MapPin   },
+    { key: 'fullName',   label: 'Full Name',   type: 'text',  ph: 'Your full name',       Icon: UserIcon },
+    { key: 'phone',      label: 'Phone',        type: 'tel',   ph: '+233 800 000 000',     Icon: Phone    },
+    { key: 'email',      label: 'Email',        type: 'email', ph: 'you@example.com',      Icon: Mail     },
+    { key: 'branch',     label: 'Branch',       type: 'text',  ph: 'e.g. Main Sanctuary',  Icon: Globe    },
+    { key: 'birthday',   label: 'Birthday',     type: 'date',  ph: '',                     Icon: Cake     },
+    { key: 'location',   label: 'Location',     type: 'text',  ph: 'Residential area',     Icon: MapPin   },
+    { key: 'occupation', label: 'Occupation',   type: 'text',  ph: 'e.g. Teacher, Nurse',  Icon: Zap      },
   ] as const;
 
   return (
@@ -770,7 +702,7 @@ const ProfileModal: React.FC<{ store: any; onClose: () => void }> = ({ store, on
         <div className="flex items-center justify-between p-5 pb-3">
           <div>
             <h2 className="font-black text-[17px]" style={{ color: B.text }}>Edit Profile</h2>
-            <p className="text-[11px] mt-0.5" style={{ color: B.textMuted }}>Keep your info up to date</p>
+            <p className="text-[11px] mt-0.5" style={{ color: B.textMuted }}>All changes sync to your ministry record</p>
           </div>
           <button onClick={onClose}
             className="w-8 h-8 rounded-full flex items-center justify-center"
@@ -783,7 +715,17 @@ const ProfileModal: React.FC<{ store: any; onClose: () => void }> = ({ store, on
             <div className="flex items-center gap-2 p-3 rounded-2xl"
                  style={{ background: '#dcfce7', border: '1px solid #bbf7d0' }}>
               <CheckCircle size={13} style={{ color: '#15803d' }} />
-              <span className="text-[12px] font-black" style={{ color: '#15803d' }}>Profile updated!</span>
+              <span className="text-[12px] font-black" style={{ color: '#15803d' }}>Profile saved and synced!</span>
+            </div>
+          )}
+          {saveError && (
+            <div className="flex items-start gap-2 p-3 rounded-2xl"
+                 style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
+              <AlertCircle size={13} style={{ color: '#dc2626' }} className="shrink-0 mt-0.5" />
+              <div>
+                <p className="text-[11px] font-black" style={{ color: '#dc2626' }}>Save Failed</p>
+                <p className="text-[10px] mt-0.5" style={{ color: '#ef4444' }}>{saveError}</p>
+              </div>
             </div>
           )}
           {fields.map(f => (

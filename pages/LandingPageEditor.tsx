@@ -18,7 +18,7 @@ interface LandingPageEditorProps {
 const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }) => {
   const { landingPageConfig, updateLandingPageConfig } = store;
   const [config, setConfig] = useState<LandingPageConfig>(landingPageConfig || DEFAULT_LANDING_PAGE_CONFIG);
-  const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'stats' | 'about' | 'footer' | 'sections' | 'advanced'>('branding');
+  const [activeTab, setActiveTab] = useState<'branding' | 'hero' | 'onboarding' | 'quickactions' | 'stats' | 'about' | 'footer' | 'sections' | 'advanced'>('branding');
   const [isSaving, setIsSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [history, setHistory] = useState<LandingPageConfig[]>(landingPageConfig ? [landingPageConfig] : [DEFAULT_LANDING_PAGE_CONFIG]);
@@ -207,6 +207,22 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }
           }`}
         >
           <Layout size={14} /> Hero Section
+        </button>
+        <button
+          onClick={() => setActiveTab('onboarding')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'onboarding' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <Type size={14} /> Onboarding Slides
+        </button>
+        <button
+          onClick={() => setActiveTab('quickactions')}
+          className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+            activeTab === 'quickactions' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+          }`}
+        >
+          <ImageIcon size={14} /> Quick Action Images
         </button>
         <button
           onClick={() => setActiveTab('stats')}
@@ -525,6 +541,116 @@ const LandingPageEditor: React.FC<LandingPageEditorProps> = ({ store, navigate }
                       className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-medium italic focus:border-indigo-600 transition-all h-24"
                     />
                   </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── ONBOARDING SLIDES ── */}
+            {activeTab === 'onboarding' && (
+              <motion.div key="onboarding" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="space-y-6">
+                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-700">
+                  These slides appear on the login/onboarding screen of the mobile app. Edit the title, body text, and optionally add a background image URL for each slide.
+                </div>
+                {(config.onboardingSlides || [{ title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }]).map((slide: any, i: number) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+                    <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-800">Slide {i + 1}</h4>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Title</label>
+                      <input type="text" value={slide.title || ''}
+                        onChange={e => {
+                          const slides = [...(config.onboardingSlides || [{ title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }])];
+                          slides[i] = { ...slides[i], title: e.target.value };
+                          const newConfig = { ...config, onboardingSlides: slides };
+                          setConfig(newConfig); addToHistory(newConfig);
+                        }}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold"
+                        placeholder="e.g. Welcome to SIJM" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Body Text</label>
+                      <textarea rows={2} value={slide.body || ''}
+                        onChange={e => {
+                          const slides = [...(config.onboardingSlides || [{ title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }])];
+                          slides[i] = { ...slides[i], body: e.target.value };
+                          const newConfig = { ...config, onboardingSlides: slides };
+                          setConfig(newConfig); addToHistory(newConfig);
+                        }}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-bold resize-none"
+                        placeholder="Connecting believers in faith, prayer, and community…" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Background Image URL (optional)</label>
+                      <input type="url" value={slide.backgroundUrl || ''}
+                        onChange={e => {
+                          const slides = [...(config.onboardingSlides || [{ title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }, { title: '', body: '', backgroundUrl: '' }])];
+                          slides[i] = { ...slides[i], backgroundUrl: e.target.value };
+                          const newConfig = { ...config, onboardingSlides: slides };
+                          setConfig(newConfig); addToHistory(newConfig);
+                        }}
+                        className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-mono"
+                        placeholder="https://images.unsplash.com/…" />
+                      {slide.backgroundUrl && (
+                        <div className="mt-2 h-20 rounded-xl overflow-hidden border border-gray-100">
+                          <img src={slide.backgroundUrl} alt="preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+
+            {/* ── QUICK ACTION IMAGES ── */}
+            {activeTab === 'quickactions' && (
+              <motion.div key="quickactions" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                className="space-y-6">
+                <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 text-sm text-blue-700">
+                  Set background images for the Quick Actions grid on the mobile home screen. Paste a direct image URL. Leave blank to use the default gradient colour.
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { key: 'give',        label: 'Give / Donate' },
+                    { key: 'sermons',     label: 'Sermons' },
+                    { key: 'events',      label: 'Events' },
+                    { key: 'live',        label: 'Live Service' },
+                    { key: 'about',       label: 'About Us' },
+                    { key: 'books',       label: 'Books / Bookstore' },
+                    { key: 'prayer',      label: 'Prayer Request' },
+                    { key: 'checkin',     label: 'Check In' },
+                    { key: 'testimonies', label: 'Testimonies' },
+                    { key: 'declaration', label: 'Declaration' },
+                  ].map(item => {
+                    const imgUrl = (config.quickActionImages as any)?.[item.key] || '';
+                    return (
+                      <div key={item.key} className="bg-white rounded-2xl border border-gray-100 p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-indigo-800">{item.label}</h4>
+                          {imgUrl && (
+                            <button onClick={() => {
+                              const newConfig = { ...config, quickActionImages: { ...(config.quickActionImages || {}), [item.key]: '' } };
+                              setConfig(newConfig); addToHistory(newConfig);
+                            }} className="text-[9px] font-black text-red-400 uppercase tracking-widest hover:text-red-600">
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        <input type="url" value={imgUrl}
+                          onChange={e => {
+                            const newConfig = { ...config, quickActionImages: { ...(config.quickActionImages || {}), [item.key]: e.target.value } };
+                            setConfig(newConfig); addToHistory(newConfig);
+                          }}
+                          className="w-full px-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 text-xs font-mono"
+                          placeholder="https://images.unsplash.com/…" />
+                        <div className="h-24 rounded-xl overflow-hidden border border-gray-100 flex items-center justify-center"
+                             style={imgUrl
+                               ? { backgroundImage: `url(${imgUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                               : { background: 'linear-gradient(135deg, #1a3acc, #7c3aed)' }}>
+                          {!imgUrl && <span className="text-white text-[10px] font-black opacity-50">{item.label}</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             )}
