@@ -1,9 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
 import { 
   DollarSign, TrendingUp, ShoppingBag, Truck, CheckCircle2, 
   Clock, Filter, Search, ChevronRight, FileText, ArrowUpRight,
-  Target, Users, Calendar, Download, RefreshCcw
+  Target, Users, Calendar, Download, RefreshCcw, Heart 
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
