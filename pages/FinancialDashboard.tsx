@@ -1,3 +1,5 @@
+import React, { useState, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   DollarSign, TrendingUp, ShoppingBag, Truck, CheckCircle2, 
   Clock, Filter, Search, ChevronRight, FileText, ArrowUpRight,
