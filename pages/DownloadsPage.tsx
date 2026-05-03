@@ -766,21 +766,22 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
       </div>
 
       {!store.isLoading && tabFilteredResources.length === 0 && (activeMainTab === 'audio' || videoSermonsEnabled) && (
-        <div className="text-center py-20">
-          <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            {activeMainTab === 'video' ? <Video size={32} className="text-slate-300" /> : <Search size={32} className="text-slate-300" />}
-          </div>
-          <h3 className="text-xl font-bold text-slate-800">
-            {activeMainTab === 'video' ? 'No video sermons yet' : 'No resources found'}
-          </h3>
-          <p className="text-slate-500">
-            {activeMainTab === 'video'
-              ? 'Add your first video sermon using the button above'
-              : 'Try adjusting your search or filters'}
-          </p>
-        </div>
-      )}
-      </> }
+  <div className="text-center py-20">
+    <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+      {activeMainTab === 'video' ? <Video size={32} className="text-slate-300" /> : <Search size={32} className="text-slate-300" />}
+    </div>
+    <h3 className="text-xl font-bold text-slate-800">
+      {activeMainTab === 'video' ? 'No video sermons yet' : 'No resources found'}
+    </h3>
+    <p className="text-slate-500">
+      {activeMainTab === 'video'
+        ? 'Add your first video sermon using the button above'
+        : 'Try adjusting your search or filters'}
+    </p>
+  </div>
+)}
+</>  // Close fragment
+)}
 
       {/* Modal code remains the same as before */}
       {showAddModal && (
