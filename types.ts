@@ -211,7 +211,10 @@ export interface Resource {
   tags?: string[];
   fileUrl: string;
   thumbnailUrl?: string;
-  videoUrl?: string; // For high-bitrate background video support
+  videoUrl?: string;        // Google Drive video URL or YouTube embed URL
+  youtubeUrl?: string;      // YouTube video URL (watch or embed)
+  isVideoSermon?: boolean;  // true = this is a video sermon
+  resourceType?: 'audio' | 'video' | 'document' | 'mixed'; // explicit type
   date: string;
   author?: string;
   fileSize?: string;

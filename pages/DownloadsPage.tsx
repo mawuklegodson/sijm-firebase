@@ -28,6 +28,25 @@ import { motion, AnimatePresence } from 'motion/react';
 import SermonQandA from '../components/SermonQandA.tsx';
 import { Lock, Globe, UserCheck, AlertCircle } from 'lucide-react';
 import { canAccessResource, getUserClearance, getAccessBadge, SUSPENSION_MESSAGE } from '../utils/accessControl.ts';
+
+// ─── YouTube helpers ──────────────────────────────────────────
+function extractYouTubeId(url: string): string {
+  if (!url) return '';
+  const patterns = [
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return '';
+}
+
+function buildYouTubeEmbed(url: string): string {
+  const id = extractYouTubeId(url);
+  return id ? `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1` : '';
+}
 import {
   getDriveDirectLink,
   getPlayableMediaUrl,
@@ -69,6 +88,9 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
   const [liveFileUrl, setLiveFileUrl] = useState('');
   const [liveThumbUrl, setLiveThumbUrl] = useState('');
   const [liveVideoUrl, setLiveVideoUrl] = useState('');
+  const [liveYoutubeUrl, setLiveYoutubeUrl] = useState('');
+  const [liveIsVideoSermon, setLiveIsVideoSermon] = useState(false);
+  const [activeMainTab, setActiveMainTab] = useState<'audio' | 'video'>('audio');
   
   const categories = ['All', 'Sermon', 'Bulletin', 'Music', 'Document', 'Video', 'Other'];
 
@@ -185,6 +207,8 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
     setLiveFileUrl('');
     setLiveThumbUrl('');
     setLiveVideoUrl('');
+    setLiveYoutubeUrl('');
+    setLiveIsVideoSermon(false);
     setShowAddModal(true);
   };
 
@@ -193,6 +217,8 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
     setLiveFileUrl(res.fileUrl || '');
     setLiveThumbUrl(res.thumbnailUrl || '');
     setLiveVideoUrl(res.videoUrl || '');
+    setLiveYoutubeUrl((res as any).youtubeUrl || '');
+    setLiveIsVideoSermon(!!(res as any).isVideoSermon);
     setShowAddModal(true);
   };
 
@@ -202,6 +228,8 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
     setLiveFileUrl('');
     setLiveThumbUrl('');
     setLiveVideoUrl('');
+    setLiveYoutubeUrl('');
+    setLiveIsVideoSermon(false);
   };
 
   const previewInputFileUrl = liveFileUrl || editingResource?.fileUrl || '';
@@ -216,6 +244,17 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
     : 'external';
   const previewIsDriveLink = previewInputFileUrl && isDriveLink(previewInputFileUrl);
   const previewFileExt = previewInputFileUrl ? getFileExtension(previewInputFileUrl) : '';
+
+  const videoSermonsEnabled = !!(store.settings?.features?.videoSermonsEnabled);
+
+  // Filter resources by active tab
+  const tabFilteredResources = filteredResources.filter((res: Resource) => {
+    if (activeMainTab === 'video') {
+      return !!(res as any).isVideoSermon || res.category === 'Video' || !!(res as any).youtubeUrl || !!(res.videoUrl);
+    }
+    // Audio tab: everything that is NOT a video sermon
+    return !(res as any).isVideoSermon && res.category !== 'Video';
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -262,17 +301,114 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
             </p>
           </div>
         </div>
+        <div className="flex items-center gap-3">
+          {isAdmin && videoSermonsEnabled && (
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+            >
+              <Plus size={20} />
+              Add {activeMainTab === 'video' ? 'Video' : 'Audio'} Sermon
+            </button>
+          )}
+          {isAdmin && !videoSermonsEnabled && (
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+            >
+              <Plus size={20} />
+              Add Sermon
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── Audio / Video Main Tabs ── */}
+      <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-2xl mb-6 w-fit">
+        <button
+          onClick={() => setActiveMainTab('audio')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            activeMainTab === 'audio'
+              ? 'bg-white text-indigo-600 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Music size={16} /> Audio Sermons
+        </button>
+        <button
+          onClick={() => setActiveMainTab('video')}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all ${
+            activeMainTab === 'video'
+              ? 'bg-white text-indigo-600 shadow-sm'
+              : 'text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Video size={16} /> Video Sermons
+          {!videoSermonsEnabled && (
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 ml-1">
+              Soon
+            </span>
+          )}
+        </button>
         {isAdmin && (
           <button
-            onClick={openAddModal}
-            className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
+            onClick={async () => {
+              await store.updateSettings?.('features', {
+                ...store.settings?.features,
+                videoSermonsEnabled: !videoSermonsEnabled,
+              });
+              showNotification(
+                videoSermonsEnabled
+                  ? 'Video sermons set to Coming Soon'
+                  : 'Video sermons enabled!',
+                'success'
+              );
+            }}
+            className="flex items-center gap-1 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-slate-200 text-slate-500 hover:bg-slate-300 transition-all ml-1"
+            title={videoSermonsEnabled ? 'Set Video Sermons as Coming Soon' : 'Enable Video Sermons'}
           >
-            <Plus size={20} />
-            Add Sermon
+            {videoSermonsEnabled ? '🔴 Disable' : '🟢 Enable'}
           </button>
         )}
       </div>
 
+      {/* ── Video Coming Soon Banner ── */}
+      {activeMainTab === 'video' && !videoSermonsEnabled && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8 rounded-3xl overflow-hidden"
+          style={{ background: 'linear-gradient(135deg, #0a1a6b 0%, #1a3acc 60%, #7c3aed 100%)' }}
+        >
+          <div className="p-10 flex flex-col md:flex-row items-center gap-8">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center shrink-0"
+                 style={{ background: 'rgba(255,255,255,0.15)', border: '2px solid rgba(255,255,255,0.25)' }}>
+              <Video size={36} className="text-white" />
+            </div>
+            <div className="flex-1 text-center md:text-left">
+              <div className="flex items-center gap-2 mb-2 justify-center md:justify-start">
+                <Sparkles size={14} className="text-yellow-300" />
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-white/50">Feature Preview</span>
+              </div>
+              <h2 className="text-white font-black text-2xl md:text-3xl mb-2 leading-tight">
+                {store.settings?.features?.videoSermonsComingSoonText || 'Video Sermons Coming Soon!'}
+              </h2>
+              <p className="text-white/60 text-sm">
+                We're preparing an incredible video library of sermons. Stay tuned for this exciting feature.
+              </p>
+              {store.settings?.features?.videoSermonsComingSoonDate && (
+                <p className="text-yellow-300 text-xs font-bold mt-2 uppercase tracking-widest">
+                  Expected: {store.settings.features.videoSermonsComingSoonDate}
+                </p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* ── Only show content when tab matches enabled state ── */}
+      {(activeMainTab === 'audio' || (activeMainTab === 'video' && videoSermonsEnabled)) && (
+      <>
       <div className="flex flex-col md:flex-row gap-4 mb-8">
         <div className="relative flex-1">
           <Search
@@ -281,7 +417,7 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
           />
           <input
             type="text"
-            placeholder="Search sermons..."
+            placeholder={`Search ${activeMainTab} sermons...`}
             className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -312,10 +448,15 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
-            {filteredResources.map((res: Resource) => {
-            const canPlayAudio = resourceSupportsInlineAudio(res);
-            const canPlayVideo = resourceSupportsInlineVideo(res);
-            const embedUrl = getEmbedUrl(res.fileUrl);
+            {tabFilteredResources.map((res: Resource) => {
+            const resAny = res as any;
+            const youtubeId = extractYouTubeId(resAny.youtubeUrl || '');
+            const youtubeEmbed = youtubeId ? buildYouTubeEmbed(resAny.youtubeUrl) : '';
+            const isVideoSermon = !!(resAny.isVideoSermon) || !!youtubeId;
+            const canPlayAudio = !isVideoSermon && resourceSupportsInlineAudio(res);
+            const canPlayVideo = !isVideoSermon && resourceSupportsInlineVideo(res);
+            const embedUrl = youtubeEmbed || getEmbedUrl(resAny.videoUrl || res.fileUrl);
+            const downloadUrl = getDriveDirectLink(res.fileUrl, 'download');
             const accessibility = accessibilityStatus[res.id];
             const isDrive = isDriveLink(res.fileUrl);
             const hasAccessIssue = isDrive && accessibility && !accessibility.accessible;
@@ -331,24 +472,37 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                 className="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 overflow-hidden flex flex-col"
               >
                 <div className="h-40 bg-slate-50 relative overflow-hidden flex items-center justify-center">
-                  {res.thumbnailUrl ? (
+                  {/* YouTube thumbnail */}
+                  {youtubeId ? (
+                    <img
+                      src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
+                      alt={res.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  ) : res.thumbnailUrl ? (
                     <img
                       src={res.thumbnailUrl}
                       alt={res.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                   ) : (
                     <div className="text-slate-200 group-hover:text-indigo-200 transition-colors">
-                      {res.category === 'Sermon' && <Music size={64} />}
-                      {res.category === 'Bulletin' && <FileText size={64} />}
-                      {res.category === 'Music' && <Music size={64} />}
-                      {res.category === 'Document' && <BookOpen size={64} />}
-                      {res.category === 'Video' && <Video size={64} />}
-                      {res.category === 'Other' && <FileText size={64} />}
+                      {isVideoSermon ? <Video size={64} /> : res.category === 'Sermon' ? <Music size={64} /> :
+                       res.category === 'Bulletin' ? <FileText size={64} /> :
+                       res.category === 'Music' ? <Music size={64} /> :
+                       res.category === 'Document' ? <BookOpen size={64} /> :
+                       res.category === 'Video' ? <Video size={64} /> : <FileText size={64} />}
+                    </div>
+                  )}
+                  
+                  {/* YouTube play badge */}
+                  {youtubeId && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                      <div className="w-14 h-14 rounded-full bg-red-600 flex items-center justify-center shadow-xl">
+                        <Play size={22} className="text-white ml-1" fill="white" />
+                      </div>
                     </div>
                   )}
                   
@@ -359,10 +513,15 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                     </div>
                   )}
                   
-                  <div className="absolute top-3 left-3 flex gap-2">
+                  <div className="absolute top-3 left-3 flex gap-2 flex-wrap">
                     <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-indigo-600 text-xs font-bold rounded-full shadow-sm">
-                      {res.category}
+                      {isVideoSermon ? '🎬 Video' : res.category}
                     </span>
+                    {youtubeId && (
+                      <span className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-full shadow-sm flex items-center gap-1">
+                        <Video size={9} /> YouTube
+                      </span>
+                    )}
                     {(() => {
                       const badge = getAccessBadge(res.accessLevel);
                       return (
@@ -385,6 +544,40 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                   <p className="text-slate-500 text-sm mt-2 line-clamp-2 flex-1">
                     {res.description}
                   </p>
+
+                  {/* ── Inline YouTube Player ── */}
+                  {isVideoSermon && youtubeEmbed && activeAudioId === res.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-4 rounded-2xl overflow-hidden aspect-video bg-black"
+                    >
+                      <iframe
+                        src={youtubeEmbed + '&autoplay=1'}
+                        className="w-full h-full"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        title={res.title}
+                      />
+                    </motion.div>
+                  )}
+
+                  {/* ── Inline GDrive Video Player ── */}
+                  {isVideoSermon && !youtubeEmbed && resAny.videoUrl && activeAudioId === res.id && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="mt-4 rounded-2xl overflow-hidden aspect-video bg-black"
+                    >
+                      <iframe
+                        src={getEmbedUrl(resAny.videoUrl)}
+                        className="w-full h-full"
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        title={res.title}
+                      />
+                    </motion.div>
+                  )}
 
                   {/* Audio Player - Using iframe */}
                   {canPlayAudio && activeAudioId === res.id && (
@@ -467,21 +660,32 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                     {fileExt && <div className="text-slate-300 uppercase">.{fileExt}</div>}
                   </div>
 
-                  <div className="mt-6 flex gap-2">
-                    {canPlayAudio && (
+                  <div className="mt-6 flex gap-2 flex-wrap">
+                    {/* Play button — audio or video */}
+                    {(canPlayAudio || isVideoSermon) && (
                       <button
-                        onClick={() => handleToggleAudio(res)}
+                        onClick={() => {
+                          if (isVideoSermon) {
+                            setActiveAudioId(activeAudioId === res.id ? null : res.id);
+                          } else {
+                            handleToggleAudio(res);
+                          }
+                        }}
                         className={`p-2.5 rounded-xl transition-all ${
                           activeAudioId === res.id
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
                             : 'bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
                         }`}
-                        title={activeAudioId === res.id ? 'Stop Playing' : 'Play Audio'}
+                        title={activeAudioId === res.id ? 'Stop' : isVideoSermon ? 'Play Video' : 'Play Audio'}
                       >
-                        {activeAudioId === res.id ? <Pause size={18} /> : <Play size={18} />}
+                        {activeAudioId === res.id
+                          ? <Pause size={18} />
+                          : isVideoSermon
+                            ? <Video size={18} />
+                            : <Play size={18} />}
                       </button>
                     )}
-                    {canPlayVideo && (
+                    {canPlayVideo && !isVideoSermon && (
                       <button
                         onClick={() => handleToggleVideo(res)}
                         className={`p-2.5 rounded-xl transition-all ${
@@ -489,23 +693,38 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200'
                             : 'bg-slate-100 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
                         }`}
-                        title={activeVideoId === res.id ? 'Stop Playing' : 'Play Video'}
+                        title={activeVideoId === res.id ? 'Stop Video' : 'Play Video'}
                       >
                         {activeVideoId === res.id ? <Pause size={18} /> : <Play size={18} />}
                       </button>
                     )}
-                    <button
-                      onClick={() => handleDownload(res)}
-                      disabled={downloadingId === res.id}
-                      className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white py-2.5 rounded-xl font-semibold hover:bg-indigo-600 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-                    >
-                      {downloadingId === res.id ? (
-                        <Loader2 size={18} className="animate-spin" />
-                      ) : (
-                        <Download size={18} />
-                      )}
-                      {downloadingId === res.id ? 'Downloading...' : 'Download'}
-                    </button>
+                    {/* YouTube external link */}
+                    {isVideoSermon && youtubeId && (
+                      <a
+                        href={`https://www.youtube.com/watch?v=${youtubeId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all"
+                        title="Watch on YouTube"
+                      >
+                        <ExternalLink size={18} />
+                      </a>
+                    )}
+                    {/* Download — only for GDrive files */}
+                    {res.fileUrl && (
+                      <button
+                        onClick={() => handleDownload(res)}
+                        disabled={downloadingId === res.id}
+                        className="flex-1 flex items-center justify-center gap-2 bg-slate-900 text-white py-2.5 rounded-xl font-semibold hover:bg-indigo-600 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        {downloadingId === res.id ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <Download size={18} />
+                        )}
+                        {downloadingId === res.id ? 'Downloading...' : 'Download'}
+                      </button>
+                    )}
                     {isAdmin && (
                       <>
                         <button
@@ -546,15 +765,22 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
       )}
       </div>
 
-      {!store.isLoading && filteredResources.length === 0 && (
+      {!store.isLoading && tabFilteredResources.length === 0 && (activeMainTab === 'audio' || videoSermonsEnabled) && (
         <div className="text-center py-20">
           <div className="bg-slate-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search size={32} className="text-slate-300" />
+            {activeMainTab === 'video' ? <Video size={32} className="text-slate-300" /> : <Search size={32} className="text-slate-300" />}
           </div>
-          <h3 className="text-xl font-bold text-slate-800">No resources found</h3>
-          <p className="text-slate-500">Try adjusting your search or filters</p>
+          <h3 className="text-xl font-bold text-slate-800">
+            {activeMainTab === 'video' ? 'No video sermons yet' : 'No resources found'}
+          </h3>
+          <p className="text-slate-500">
+            {activeMainTab === 'video'
+              ? 'Add your first video sermon using the button above'
+              : 'Try adjusting your search or filters'}
+          </p>
         </div>
       )}
+      </> }
 
       {/* Modal code remains the same as before */}
       {showAddModal && (
@@ -582,7 +808,9 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                 const formData = new FormData(e.currentTarget);
                 const rawFileUrl = String(formData.get('fileUrl') || '').trim();
                 const rawThumbUrl = String(formData.get('thumbnailUrl') || '').trim();
-                const rawVideoUrl = String(formData.get('videoUrl') || '').trim();
+                const rawVideoUrl = liveVideoUrl.trim();
+                const rawYoutubeUrl = liveYoutubeUrl.trim();
+                const isVideo = liveIsVideoSermon;
                 
                 const data = {
                   title: String(formData.get('title') || '').trim(),
@@ -591,6 +819,9 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                   fileUrl: rawFileUrl,
                   thumbnailUrl: rawThumbUrl,
                   videoUrl: rawVideoUrl,
+                  youtubeUrl: rawYoutubeUrl,
+                  isVideoSermon: isVideo,
+                  resourceType: isVideo ? 'video' : 'audio',
                   date: String(formData.get('date') || '').trim(),
                   author: String(formData.get('author') || '').trim(),
                   fileSize: String(formData.get('fileSize') || '').trim(),
@@ -695,6 +926,59 @@ const DownloadsPage: React.FC<DownloadsPageProps> = ({ store, isAdmin = false, n
                     className="w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
+
+                {/* Video Sermon Fields */}
+                <div className="col-span-2 p-4 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-indigo-800 uppercase tracking-widest">Video Sermon Options</span>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="isVideoSermon"
+                        checked={liveIsVideoSermon}
+                        onChange={e => setLiveIsVideoSermon(e.target.checked)}
+                        className="w-4 h-4 rounded text-indigo-600"
+                      />
+                      <span className="text-xs font-bold text-indigo-700">This is a Video Sermon</span>
+                    </label>
+                  </div>
+                  {liveIsVideoSermon && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-xs font-bold text-indigo-700 mb-1">YouTube URL</label>
+                        <input
+                          name="youtubeUrl"
+                          value={liveYoutubeUrl}
+                          onChange={e => setLiveYoutubeUrl(e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=..."
+                          className="w-full px-4 py-2 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm"
+                        />
+                        {liveYoutubeUrl && extractYouTubeId(liveYoutubeUrl) && (
+                          <div className="mt-2 rounded-xl overflow-hidden aspect-video bg-black">
+                            <iframe
+                              src={"https://www.youtube.com/embed/" + extractYouTubeId(liveYoutubeUrl)}
+                              className="w-full h-full"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media"
+                              allowFullScreen
+                              title="YouTube preview"
+                            />
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold text-indigo-700 mb-1">OR: Google Drive Video URL</label>
+                        <input
+                          name="videoUrl"
+                          value={liveVideoUrl}
+                          onChange={e => setLiveVideoUrl(e.target.value)}
+                          placeholder="https://drive.google.com/file/d/.../view"
+                          className="w-full px-4 py-2 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Author</label>
                   <input
